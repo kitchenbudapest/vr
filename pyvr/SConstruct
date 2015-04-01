@@ -1,0 +1,110 @@
+## INFO ########################################################################
+##                                                                            ##
+##                                  kibu-vr                                   ##
+##                                  =======                                   ##
+##                                                                            ##
+##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
+##                       Version: 0.1.0.141 (20150401)                        ##
+##                           File: pyvr/SConstruct                            ##
+##                                                                            ##
+##               For more information about the project, visit                ##
+##                            <http://vr.kibu.hu>.                            ##
+##              Copyright (C) 2015 Peter Varo, Kitchen Budapest               ##
+##                                                                            ##
+##  This program is free software: you can redistribute it and/or modify it   ##
+##   under the terms of the GNU General Public License as published by the    ##
+##       Free Software Foundation, either version 3 of the License, or        ##
+##                    (at your option) any later version.                     ##
+##                                                                            ##
+##    This program is distributed in the hope that it will be useful, but     ##
+##         WITHOUT ANY WARRANTY; without even the implied warranty of         ##
+##            MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.            ##
+##            See the GNU General Public License for more details.            ##
+##                                                                            ##
+##     You should have received a copy of the GNU General Public License      ##
+##     along with this program, most likely a file in the root directory,     ##
+##        called 'LICENSE'. If not, see <http://www.gnu.org/licenses>.        ##
+##                                                                            ##
+######################################################################## INFO ##
+
+# Indicate the beginning of building
+print '{:#^80}'.format(' SCONS BUILD ')
+
+# Import python modules
+from os import path
+
+# Config variables
+gcc        = 'gcc'
+clang      = 'clang'
+input_dir  = 'src'
+output_dir = 'build'
+target     = 'oculus'
+source     = ['oculus_test.c']
+version    = 0.50 # or 0.44
+
+# C Compiler
+CC = gcc
+
+# C Compiler Flags
+CCFLAGS = ['v',
+           'g',
+           'O3',
+           'Wall',
+           'Wextra',
+           'pedantic',
+           'std=c11',]
+
+# GCC Specific Compiler Flags
+GCCFLAGS = ['fdiagnostics-color=always']
+
+# CLANG Specific Compiler Flags
+CLANGFLAGS = ['fcolor-diagnostics',
+              'fmacro-backtrace-limit=0']
+
+# Add compiler specific flags
+CCFLAGS.extend(GCCFLAGS if CC == gcc else CLANGFLAGS if CC == clang else [])
+
+# C Pre-Processor Path (Include)
+CPPPATH = ['/usr/include/python3.4m']
+
+# Library paths
+LIBPATH = ['/usr/lib',
+           '/usr/local/lib']
+
+# Set version specific locations
+if version >= 0.50:
+    PATH = path.join('..', 'ovr_sdk_linux_0.5.0.1', 'LibOVR')
+    CPPPATH.append(path.join(PATH, 'Include'))
+    LIBPATH.append(path.join(PATH, 'Lib', 'Linux', 'x86_64', 'Debug'))
+else:
+    PATH = path.join('..', 'ovr_sdk_linux_0.4.4', 'LibOVR')
+    CPPPATH.append(path.join('Src'))
+    LIBPATH.append(path.join('Lib', 'Linux', 'Release', 'x86_64'))
+
+# Libraries
+LIBS = ['GL',
+        'GLU',
+        'X11',
+        'Xrandr',
+        'Xi',
+        'stdc++',
+        'm',
+        'pthread',
+        'rt',
+        'OVR',]
+
+# Create environment
+environment = Environment(CC=CC,
+                          CCFLAGS=['-' + flag for flag in CCFLAGS],
+                          CPPPATH=CPPPATH,
+                          LIBPATH=LIBPATH,
+                          LIBS=LIBS,)
+
+# Specify output directory
+environment.VariantDir(variant_dir=output_dir,
+                       src_dir=input_dir)
+
+# Create shared library
+environment.SharedLibrary(target=target,
+                          source=[path.join(output_dir, file) for file in source],
+                          SHLIBPREFIX='')

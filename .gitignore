@@ -1,0 +1,17 @@
+*.DS_Store
+*.pyc
+*.pyo
+*.sublime-workspace
+*.sublime-project
+*.so
+
+.ccom_cache
+.clic_cache
+.cdoc_cache
+
+.ccom_todo
+.cdoc_toc
+
+ovr_sdk
+build
+README.html
