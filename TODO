@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.0.145 (20150401)                        ##
+##                       Version: 0.1.0.164 (20150402)                        ##
 ##                                 File: TODO                                 ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -27,17 +27,33 @@
 ##                                                                            ##
 ######################################################################## INFO ##
 
-#----------------------------- 2 POSTS IN 2 FILES -----------------------------#
+#----------------------------- 4 POSTS IN 3 FILES -----------------------------#
 TODO:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 1
+  - file: main.py
+    line: 49
+    note: |
+          make build-script work :)
+          Import cutils modules => versioning
+          import build
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 2
+  - file: main.py
+    line: 125
+    note: |
+          positioner(*finger.tip_position) => leaking memory and never returns
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 3
   - file: pyvr/build/oculus_test.c
     line: 291
     note: |
           make index optional !!! 
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 2
+  # 4
   - file: pyvr/src/oculus_test.c
     line: 291
     note: |

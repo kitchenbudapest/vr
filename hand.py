@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.0.141 (20150401)                        ##
+##                       Version: 0.1.0.146 (20150402)                        ##
 ##                               File: hand.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -29,91 +29,51 @@
 
 # Import python modules
 from sys import path as sys_path
+from collections import OrderedDict
 
 # Import leap modules
 sys_path.insert(0, '/usr/lib/Leap')
 import Leap
 
-TYPES = (Leap.Finger.TYPE_THUMB,
-         Leap.Finger.TYPE_INDEX,
-         Leap.Finger.TYPE_MIDDLE,
-         Leap.Finger.TYPE_RING,
-         Leap.Finger.TYPE_PINKY)
-
+FINGER_CONSTS = [('thumb' , {'leap_type'    : Leap.Finger.TYPE_THUMB,
+                             'scale_factor' : 1.00}),
+                 ('index' , {'leap_type'    : Leap.Finger.TYPE_INDEX,
+                             'scale_factor' : 0.60}),
+                 ('middle', {'leap_type'    : Leap.Finger.TYPE_MIDDLE,
+                             'scale_factor' : 0.70}),
+                 ('ring'  , {'leap_type'    : Leap.Finger.TYPE_RING,
+                             'scale_factor' : 0.60}),
+                 ('pinky' , {'leap_type'    : Leap.Finger.TYPE_PINKY,
+                             'scale_factor' : 0.55})]
 
 #------------------------------------------------------------------------------#
 class Hand:
 
-    TYPE = ''
-
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    @property
-    def index(self):
-        return self._index
-    @index.setter
-    def index(self, value):
-        self._index = value
+    def __init__(self,
+                 blender_scene,
+                 finger_prototype_name,
+                 default_origin_name):
 
+        self._fingers = fingers = OrderedDict()
+        for finger, details in FINGER_CONSTS:
+            # Create blender object from prototype
+            obj = blender_scene.addObject(finger_prototype_name,
+                                          default_origin_name)
+            obj.localScale = (details['scale_factor'],)*3
 
-    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def __init__(self, blender_scene):
+            # Make finger accessible through this hand as a member
+            setattr(self, finger, obj)
 
-        ## Create fingers
-        #self._thumb  = ...
-        #self._index  = ...
-        #self._middle = ...
-        #self._ring   = ...
-        #self._pinky  = ...
-
-        #self._fingers = (self.thumb,
-        #                 self.index,
-        #                 self.middle,
-        #                 self.ring,
-        #                 self.pinky)
-
-        #for finger in self._fingers:
-        #    bpy.ops.mesh.primitive_uv_sphere_add(size=1,
-        #                                         segments=16,
-        #                                         ring_count=8,
-        #                                         view_align=False,
-        #                                         enter_editmode=False,
-        #                                         location=ORIGO,
-        #                                         layers=FIRST_LAYER)
-
-
-        ##
-        ##   THIS WON'T WORK!
-        ##
-        #for id, object in iter(TYPES, self._fingers):
-        #    setattr(self, id, object)
-
-        self._fingers = {
-            Leap.Finger.TYPE_THUMB  : blender_scene.objects['finger_{}_thumb'.format(self.TYPE)],
-            Leap.Finger.TYPE_INDEX  : blender_scene.objects['finger_{}_index'.format(self.TYPE)],
-            Leap.Finger.TYPE_MIDDLE : blender_scene.objects['finger_{}_middle'.format(self.TYPE)],
-            Leap.Finger.TYPE_RING   : blender_scene.objects['finger_{}_ring'.format(self.TYPE)],
-            Leap.Finger.TYPE_PINKY  : blender_scene.objects['finger_{}_pinky'.format(self.TYPE)],
-        }
+            # Store fingers to be accessible via leap-types
+            fingers[details['leap_type']] = obj
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def __iter__(self):
-        pass
-
+    def __repr__(self):
+        return ('Hand(thumb={}, index={}, middle={}, '
+                'ring={}, pinky={})').format(*self._fingers.values())
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def __setitem__(self, finger, position):
-        self._fingers[finger].localPosition = position
-
-
-#------------------------------------------------------------------------------#
-class LeftHand(Hand):
-
-    TYPE = 'left'
-
-
-
-#------------------------------------------------------------------------------#
-class RightHand(Hand):
-
-    TYPE = 'right'
+    def set_finger(self, finger_leap_type, position):
+        self._fingers[finger_leap_type].localPosition = position

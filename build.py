@@ -5,7 +5,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.0.144 (20150401)                        ##
+##                       Version: 0.1.0.154 (20150402)                        ##
 ##                               File: build.py                               ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -28,12 +28,14 @@
 ##                                                                            ##
 ######################################################################## INFO ##
 
+
+# Import python modules
+from os import getcwd
+from copy import deepcopy
+
 # Module level constants
 CURRENT_DIR = '.'
 POST_COMMIT = 0  # True or False => skip CLIC (version) changes only
-
-# Import python modules
-from copy import deepcopy
 
 # Import cutils modules
 try:
@@ -58,11 +60,13 @@ try:
 
     # Update version
     cutils.cver.version(CURRENT_DIR, sub_max=9, rev_max=9, build_max=999)
+
     # Collect all special comments
     cutils.ccom.collect(CURRENT_DIR,
                         include=ccom_include,
                         exclude=exclude,
                         overwrite=POST_COMMIT)
+
     # Update header comments
     cutils.clic.header(CURRENT_DIR,
                        include=clic_include,
