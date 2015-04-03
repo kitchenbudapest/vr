@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.0.141 (20150401)                        ##
+##                       Version: 0.1.0.169 (20150403)                        ##
 ##                           File: pyvr/SConstruct                            ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -39,8 +39,8 @@ clang      = 'clang'
 input_dir  = 'src'
 output_dir = 'build'
 target     = 'oculus'
-source     = ['oculus_test.c']
-version    = 0.50 # or 0.44
+source     = ['oculus.c']
+version    = 0.501 # or 0.44
 
 # C Compiler
 CC = gcc
@@ -72,7 +72,7 @@ LIBPATH = ['/usr/lib',
            '/usr/local/lib']
 
 # Set version specific locations
-if version >= 0.50:
+if version >= 0.501:
     PATH = path.join('..', 'ovr_sdk_linux_0.5.0.1', 'LibOVR')
     CPPPATH.append(path.join(PATH, 'Include'))
     LIBPATH.append(path.join(PATH, 'Lib', 'Linux', 'x86_64', 'Debug'))

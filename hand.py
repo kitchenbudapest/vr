@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.0.146 (20150402)                        ##
+##                       Version: 0.1.0.201 (20150403)                        ##
 ##                               File: hand.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -47,26 +47,54 @@ FINGER_CONSTS = [('thumb' , {'leap_type'    : Leap.Finger.TYPE_THUMB,
                              'scale_factor' : 0.55})]
 
 #------------------------------------------------------------------------------#
+class Finger:
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def __init__(self, object):
+        self._object = object
+        self._callbacks = {'position': [],
+                           'scale'   : [],}
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def append_callback(self, reference, function):
+        try:
+            self._callbacks[reference].append(function)
+        except KeyError:
+            raise KeyError('Finger object has no callback '
+                           'reference {!r}'.format(reference))
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def clear_callback(self, reference):
+        if reference in self._callbacks:
+            self._callbacks[reference] = []
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def set_position(self, position):
+        object = self._object
+        object.localPosition = position
+        for function in self._callbacks['position']:
+            function(object)
+
+
+
+#------------------------------------------------------------------------------#
 class Hand:
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def __init__(self,
-                 blender_scene,
-                 finger_prototype_name,
-                 default_origin_name):
+    def __init__(self, finger_creator):
 
         self._fingers = fingers = OrderedDict()
         for finger, details in FINGER_CONSTS:
             # Create blender object from prototype
-            obj = blender_scene.addObject(finger_prototype_name,
-                                          default_origin_name)
-            obj.localScale = (details['scale_factor'],)*3
+            object = Finger(finger_creator(localScale=(details['scale_factor'],)*3))
 
             # Make finger accessible through this hand as a member
-            setattr(self, finger, obj)
+            setattr(self, finger, object)
 
             # Store fingers to be accessible via leap-types
-            fingers[details['leap_type']] = obj
+            fingers[details['leap_type']] = object
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
@@ -75,5 +103,7 @@ class Hand:
                 'ring={}, pinky={})').format(*self._fingers.values())
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def set_finger(self, finger_leap_type, position):
-        self._fingers[finger_leap_type].localPosition = position
+    def do_finger(self, finger_leap_type, **actions):
+        finger = self._fingers[finger_leap_type]
+        for action, value in actions.items():
+            getattr(finger, action)(value)

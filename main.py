@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.0.161 (20150402)                        ##
+##                       Version: 0.1.0.201 (20150403)                        ##
 ##                               File: main.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -53,8 +53,9 @@ from hand import Hand
 
 # Module level constants
 #------------------------------------------------------------------------------#
-FINGER_PROTOTYPE = 'Prototype_Finger'
-GLOBAL_OBJECT    = 'Origo'
+PROTOTYPE_FINGER  = 'Prototype_Finger'
+PROTOTYPE_SURFACE = 'Prototype_Surface'
+GLOBAL_OBJECT     = 'Origo'
 HEAD     = 0
 DESK     = 1
 MINIFIER = 0.1
@@ -80,14 +81,32 @@ class Sculptomat:
         # Create a new instance of the oculus-rift controller
         self._rift_controller = oculus.OculusRiftDK2(device_index=0)
         # Create a reference to the blender scene
-        self._blender_scene = bge.logic.getCurrentScene()
+        self._blender_scene = blender_scene = bge.logic.getCurrentScene()
 
         # Make references to blender objects
         self._camera  = self._blender_scene.active_camera
-        #self._surface = Surface(self._blender_scene.objects['surface'].meshes[0])
 
-        self._left_hand  = Hand(self._blender_scene, 'Prototype_Finger', 'Origo')
-        self._right_hand = Hand(self._blender_scene, 'Prototype_Finger', 'Origo')
+        # Create finger blender objects from prototypes and
+        # store their references inside Hand instances
+        finger_creator = self._prototype_creator(PROTOTYPE_FINGER)
+        self._left_hand  = Hand(finger_creator)
+        self._right_hand = Hand(finger_creator)
+
+        # Create surface blender object from prototype and
+        # store its reference inside a Surface instance
+        #self._surface = Surface(self._prototype_creator(PROTOTYPE_SURFACE))
+        self._srf_f = Surface(self._prototype_creator('Prototype_Surface_face'))
+        self._srf_w = Surface(self._prototype_creator('Prototype_Surface_wire'))
+
+        def pointed_with_index(object):
+            position = object.localPosition
+            for vertex in self._srf_f:
+                print(position, vertex.XYZ)
+                if distance(position, vertex.getXYZ()) < 2:
+                    print('yeah')
+                    vertex.y += 0.5
+
+        self._right_hand.index.append_callback('position', pointed_with_index)
 
         # Set position setter
         # If DESK
@@ -123,7 +142,7 @@ class Sculptomat:
             hand = self._hands[int(leap_hand.is_right)]
             for finger in leap_hand.fingers:
                 # TODO: positioner(*finger.tip_position) => leaking memory and never returns
-                hand.set_finger(finger.type(), positioner(finger.tip_position))
+                hand.do_finger(finger.type(), set_position=positioner(finger.tip_position))
 
         ## Set surface
         #for vertex in self._surface:
@@ -153,6 +172,15 @@ class Sculptomat:
                 position[2] * -MINIFIER,
                 position[1] *  MINIFIER - 10)
 
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def _prototype_creator(self, prototype):
+        def creator(**preferences):
+            object = self._blender_scene.addObject(prototype, GLOBAL_OBJECT)
+            for preference, value in preferences.items():
+                setattr(object, preference, value)
+            return object
+        return creator
 
 
 #------------------------------------------------------------------------------#

@@ -5,6 +5,8 @@
 *.sublime-project
 *.so
 
+.sconsign.dblite
+
 .ccom_cache
 .clic_cache
 .cdoc_cache

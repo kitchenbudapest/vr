@@ -4,8 +4,8 @@
 **                                  =======                                   **
 **                                                                            **
 **        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         **
-**                       Version: 0.1.0.145 (20150401)                        **
-**                        File: pyvr/src/oculus_test.c                        **
+**                       Version: 0.1.0.205 (20150403)                        **
+**                          File: pyvr/src/oculus.c                           **
 **                                                                            **
 **               For more information about the project, visit                **
 **                            <http://vr.kibu.hu>.                            **
@@ -123,9 +123,18 @@
 #define MODULE_NAME                             "oculus"
 
 
+/* Module level variables */
+/*----------------------------------------------------------------------------*/
+/* Is LibOVR initialised? */
+static bool   IS_INITIALISED   = false;
+/* Number of controller instances using the insitialised LibOVR */
+static size_t CONTROLLER_COUNT = 0;
+
+
 /*----------------------------------------------------------------------------*/
 static PyObject *oculus_InitialisationError;
 static PyObject *oculus_TrackingError;
+
 
 /*----------------------------------------------------------------------------*/
 typedef struct
@@ -275,9 +284,17 @@ oculus_OculusRiftDK2_init(oculus_OculusRiftDK2 *self,
                           PyObject *args,
                           PyObject *kwargs)
 {
-    /* Initialise Oculus */
-    if (!ovr_Initialize(0))
-        goto Init_Error;
+    /* If LibOVR has not been initialised yet */
+    if (!IS_INITIALISED)
+    {
+        /* Initialise Oculus */
+        if (!ovr_Initialize(0))
+            goto Init_Error;
+        IS_INITIALISED = true;
+    }
+
+    /* Increase instance counter, which is using the initialised LibOVR */
+    ++CONTROLLER_COUNT;
 
     /* Check if there are any HMDs available */
     if (!ovrHmd_Detect())
@@ -357,7 +374,13 @@ oculus_OculusRiftDK2_dealloc(oculus_OculusRiftDK2 *self)
     /* Close oculus session */
     if (self->device)
         ovrHmd_Destroy(self->device);
-    ovr_Shutdown();
+
+    /* If this instance was the last one, which used the initialised LibOVR */
+    if (!--CONTROLLER_COUNT)
+    {
+        IS_INITIALISED = false;
+        ovr_Shutdown();
+    }
 
     /* Free self as a python object */
     Py_TYPE(self)->tp_free((PyObject *)self);
