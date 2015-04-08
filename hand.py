@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.0.201 (20150403)                        ##
+##                       Version: 0.1.0.212 (20150408)                        ##
 ##                               File: hand.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -50,10 +50,35 @@ FINGER_CONSTS = [('thumb' , {'leap_type'    : Leap.Finger.TYPE_THUMB,
 class Finger:
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    @property
+    def position(self):
+        return self._object.worldPosition
+    @position.setter
+    def position(self, value):
+        object = self._object
+        object.worldPosition = value
+        for callback in self._callbacks['position']:
+            callback(object)
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    @property
+    def color(self):
+        return self._object.color
+    @color.setter
+    def color(self, value):
+        object = self._object
+        object.color = value
+        for callback in self._callbacks['color']:
+            callback(object)
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def __init__(self, object):
         self._object = object
-        self._callbacks = {'position': [],
-                           'scale'   : [],}
+        self._callbacks = OrderedDict([('position', []),
+                                       ('scale'   , []),
+                                       ('color'   , [])])
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def append_callback(self, reference, function):
@@ -70,21 +95,13 @@ class Finger:
             self._callbacks[reference] = []
 
 
-    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def set_position(self, position):
-        object = self._object
-        object.localPosition = position
-        for function in self._callbacks['position']:
-            function(object)
-
-
 
 #------------------------------------------------------------------------------#
 class Hand:
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def __init__(self, finger_creator):
-
+        self._callbacks = OrderedDict()
         self._fingers = fingers = OrderedDict()
         for finger, details in FINGER_CONSTS:
             # Create blender object from prototype
@@ -102,8 +119,30 @@ class Hand:
         return ('Hand(thumb={}, index={}, middle={}, '
                 'ring={}, pinky={})').format(*self._fingers.values())
 
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def append_callback(self, reference, callback):
+        self._callbacks[reference] = callback
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def clear_callback(self, reference):
+        try:
+            del self._callbacks[reference]
+        except KeyError:
+            pass
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def do_callbacks(self):
+        for callback in self._callbacks.values():
+            callback(self)
+
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def do_finger(self, finger_leap_type, **actions):
         finger = self._fingers[finger_leap_type]
         for action, value in actions.items():
-            getattr(finger, action)(value)
+            try:
+                getattr(finger, action)(value)
+            except TypeError:
+                setattr(finger, action, value)

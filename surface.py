@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.0.185 (20150403)                        ##
+##                       Version: 0.1.0.212 (20150408)                        ##
 ##                              File: surface.py                              ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -34,9 +34,21 @@ class Surface:
     MATERIAL_INDEX = 0
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    @property
+    def position(self):
+        return self._object.worldPosition
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    @property
+    def orientation(self):
+        return self._object.worldOrientation
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def __init__(self, surface_creator):
-        object = surface_creator(localScale=(10,)*3)
-        self._mesh   = object.meshes[self.MESH_INDEX]
+        self._object = surface_creator()
+        self._mesh   = self._object.meshes[self.MESH_INDEX]
         self._length = self._mesh.getVertexArrayLength(self.MATERIAL_INDEX)
 
 

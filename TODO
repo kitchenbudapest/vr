@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.0.205 (20150403)                        ##
+##                       Version: 0.1.0.227 (20150408)                        ##
 ##                                 File: TODO                                 ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -27,7 +27,7 @@
 ##                                                                            ##
 ######################################################################## INFO ##
 
-#----------------------------- 4 POSTS IN 3 FILES -----------------------------#
+#----------------------------- 6 POSTS IN 3 FILES -----------------------------#
 TODO:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 1
@@ -41,22 +41,51 @@ TODO:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 2
   - file: main.py
-    line: 144
+    line: 112
+    note: |
+          pinches:
+          - thumb + index  => move selected
+          - thumb + middle => select
+          - thumb + ring   => deselect
+          - thumb + pinky  => deselect all
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 3
+  - file: main.py
+    line: 139
+    note: |
+          calculate the midpoint between index and thumb
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 4
+  - file: main.py
+    line: 204
     note: |
           positioner(*finger.tip_position) => leaking memory and never returns
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 3
+  # 5
   - file: pyvr/build/oculus.c
     line: 308
     note: |
           make index optional !!! 
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 4
+  # 6
   - file: pyvr/src/oculus.c
     line: 308
     note: |
           make index optional !!! 
+
+
+
+#----------------------------- 1 POSTS IN 1 FILES -----------------------------#
+NOTE:
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 1
+  - file: main.py
+    line: 79
+    note: |
+          local->global: http://blenderartists.org/forum/archive/index.php/t-180690.html
 
 

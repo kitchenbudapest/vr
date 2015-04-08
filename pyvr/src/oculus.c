@@ -4,7 +4,7 @@
 **                                  =======                                   **
 **                                                                            **
 **        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         **
-**                       Version: 0.1.0.205 (20150403)                        **
+**                       Version: 0.1.0.227 (20150408)                        **
 **                          File: pyvr/src/oculus.c                           **
 **                                                                            **
 **               For more information about the project, visit                **
@@ -140,8 +140,8 @@ static PyObject *oculus_TrackingError;
 typedef struct
 {
     PyObject_HEAD
-    PyObject *rotation;
     PyObject *position;
+    PyObject *orientation;
 } oculus_OculusRiftDK2Frame;
 
 
@@ -151,19 +151,19 @@ oculus_OculusRiftDK2Frame_init(oculus_OculusRiftDK2Frame *self,
                                PyObject *args,
                                PyObject *kwargs)
 {
-    static char *kwlist[] = {"rotation", "position", NULL};
+    static char *kwlist[] = {"position", "orientation", NULL};
     /* Unpack and store arguments */
     if (!PyArg_ParseTupleAndKeywords(args,
                                      kwargs,
                                      "OO:__init__",
                                      kwlist,
-                                     &self->rotation,
-                                     &self->position))
+                                     &self->position,
+                                     &self->orientation))
         return PYTHON_RETURN_VALUE_FAILURE;
 
     /* Increase ref-count of the objects */
-    Py_INCREF(self->rotation);
     Py_INCREF(self->position);
+    Py_INCREF(self->orientation);
     return PYTHON_RETURN_VALUE_SUCCESS;
 }
 
@@ -173,8 +173,8 @@ static void
 oculus_OculusRiftDK2Frame_dealloc(oculus_OculusRiftDK2Frame *self)
 {
     /* Decrease python object references */
-    Py_XDECREF(self->rotation);
     Py_XDECREF(self->position);
+    Py_XDECREF(self->orientation);
     /* Free self as a python object */
     Py_TYPE(self)->tp_free((PyObject *)self);
 }
@@ -182,14 +182,14 @@ oculus_OculusRiftDK2Frame_dealloc(oculus_OculusRiftDK2Frame *self)
 
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 static PyMemberDef oculus_OculusRiftDK2Frame_members[] = {
-    {"rotation", T_OBJECT,
-                 offsetof(oculus_OculusRiftDK2Frame, rotation),
-                 READONLY,
-                 "Rotation vector"},
-    {"position", T_OBJECT,
-                 offsetof(oculus_OculusRiftDK2Frame, position),
-                 READONLY,
-                 "Position vector"},
+    {"position"  ,  T_OBJECT,
+                    offsetof(oculus_OculusRiftDK2Frame, position),
+                    READONLY,
+                    "Position vector (tuple of three floats: x, y, z)"},
+    {"orientation", T_OBJECT,
+                    offsetof(oculus_OculusRiftDK2Frame, orientation),
+                    READONLY,
+                    "Orientation quaternion (tuple of 4 floats: w, x, y, z)"},
     {NULL, 0, 0, 0, NULL}
 };
 
@@ -405,27 +405,26 @@ oculus_OculusRiftDK2_frame(oculus_OculusRiftDK2 *self)
     /* Get the most current (0.0) tracking state of the HMD */
     ovrTrackingState state = ovrHmd_GetTrackingState(self->device, 0.0);
     ovrPosef head   = state.HeadPose.ThePose;
-    ovrPosef camera = state.CameraPose;
+    // ovrPosef camera = state.CameraPose;
 
     /* Create python tuples and fill them with values and place them into
        another tuple, which will be the argument for the frame-object */
-    PyObject *rotation = Py_BuildValue("(ffff)", camera.Position.x,
-                                                 camera.Position.y,
-                                                 camera.Position.z,
-                                                 0.f),
-             *position = Py_BuildValue("(ffff)", head.Position.x,
-                                                 head.Position.y,
-                                                 head.Position.z,
-                                                 0.f),
-             *args = Py_BuildValue("(OO)", rotation, position);
+    PyObject *position    = Py_BuildValue("(fff)",  head.Position.x,
+                                                    head.Position.y,
+                                                    head.Position.z),
+             *orientation = Py_BuildValue("(ffff)", head.Orientation.w,
+                                                    head.Orientation.x,
+                                                    head.Orientation.y,
+                                                    head.Orientation.z),
+             *args = Py_BuildValue("(OO)", position, orientation);
 
     /* Create a new frame-object and pass the previously constructed argument tuple */
     PyObject *frame = PyObject_CallObject((PyObject *)&oculus_OculusRiftDK2FrameType, args);
 
     /* Clean up */
     Py_XDECREF(args);
-    Py_XDECREF(rotation);
     Py_XDECREF(position);
+    Py_XDECREF(orientation);
 
     /* Return the new frame-object */
     return frame;

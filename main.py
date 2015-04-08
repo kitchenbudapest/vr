@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.0.201 (20150403)                        ##
+##                       Version: 0.1.0.218 (20150408)                        ##
 ##                               File: main.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -28,7 +28,7 @@
 ######################################################################## INFO ##
 
 # Import python modules
-from math import sqrt
+from math import sqrt, radians
 from sys import path as sys_path
 
 # Import leap modules
@@ -40,7 +40,7 @@ import oculus
 
 # Import blender modules
 import bge
-from mathutils import Quaternion, Euler
+from mathutils import Vector, Matrix, Euler, Quaternion
 
 # Import user modules
 from surface import Surface
@@ -56,9 +56,12 @@ from hand import Hand
 PROTOTYPE_FINGER  = 'Prototype_Finger'
 PROTOTYPE_SURFACE = 'Prototype_Surface'
 GLOBAL_OBJECT     = 'Origo'
-HEAD     = 0
-DESK     = 1
+MOUNTED_ON_HEAD   = 0
+MOUNTED_ON_DESK   = 1
 MINIFIER = 0.1
+
+PINCH_FINGERS_DISTANCE        = 2
+PINCH_VERTEX_FINGERS_DISTANCE = 1
 
 
 # Helper functions
@@ -73,9 +76,11 @@ def distance(position1, position2):
 #------------------------------------------------------------------------------#
 class Sculptomat:
 
+    # NOTE: local->global: http://blenderartists.org/forum/archive/index.php/t-180690.html
+
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def __init__(self, mounted_on):
+    def __init__(self, mounted_on_desk):
         # Create a new instance of the leap-motion controller
         self._leap_controller = Leap.Controller()
         # Create a new instance of the oculus-rift controller
@@ -85,6 +90,7 @@ class Sculptomat:
 
         # Make references to blender objects
         self._camera  = self._blender_scene.active_camera
+        self._origo   = self._blender_scene.objects[GLOBAL_OBJECT]
 
         # Create finger blender objects from prototypes and
         # store their references inside Hand instances
@@ -98,20 +104,56 @@ class Sculptomat:
         self._srf_f = Surface(self._prototype_creator('Prototype_Surface_face'))
         self._srf_w = Surface(self._prototype_creator('Prototype_Surface_wire'))
 
-        def pointed_with_index(object):
-            position = object.localPosition
-            for vertex in self._srf_f:
-                print(position, vertex.XYZ)
-                if distance(position, vertex.getXYZ()) < 2:
-                    print('yeah')
-                    vertex.y += 0.5
 
-        self._right_hand.index.append_callback('position', pointed_with_index)
+        self._left_hand.thumb_index_pinched_vertex  = None, None
+        self._right_hand.thumb_index_pinched_vertex = None, None
+
+
+        # TODO: pinches:
+        #       - thumb + index  => move selected
+        #       - thumb + middle => select
+        #       - thumb + ring   => deselect
+        #       - thumb + pinky  => deselect all
+
+
+        def pinch(hand):
+            # If user is pinching with thumb and index fingers
+            if distance(hand.thumb.position,
+                        hand.index.position) < PINCH_FINGERS_DISTANCE:
+
+                try:
+                    vertex_face, vertex_wire = hand.thumb_index_pinched_vertex
+                    vertex_face.XYZ = vertex_wire.XYZ = hand.index.position
+                    return
+                except AttributeError:
+                    pass
+
+                hand.thumb.color = hand.index.color = 1.0, 0.0, 0.0, 1.0
+
+                # Go through all vertices of surfaces
+                for vertex_face, vertex_wire in zip(self._srf_f, self._srf_w):
+                    # Check if pinching a vertex
+                    if (distance(hand.thumb.position, vertex_face.XYZ) < PINCH_VERTEX_FINGERS_DISTANCE or
+                        distance(hand.index.position, vertex_face.XYZ) < PINCH_VERTEX_FINGERS_DISTANCE):
+                            # If so edit the vertex's position and stop iterating
+                            # TODO: calculate the midpoint between index and thumb
+                            hand.thumb.color = hand.index.color = 0.0, 1.0, 0.0, 0.5
+                            vertex_face.XYZ = vertex_wire.XYZ = hand.index.position
+                            hand.thumb_index_pinched_vertex = vertex_face, vertex_wire
+                            return
+            else:
+                hand.thumb_index_pinched_vertex = None, None
+                hand.thumb.color = hand.index.color = 1.0, 1.0, 1.0, 1.0
+
+
+        self._right_hand.append_callback('pinch', pinch)
+        self._left_hand.append_callback('pinch', pinch)
 
         # Set position setter
         # If DESK
-        if mounted_on:
-            self._hands = self._right_hand, self._left_hand
+        if mounted_on_desk:
+            #self._hands = self._right_hand, self._left_hand
+            self._hands = self._left_hand, self._right_hand
             self._positioner = self._positioner_on_desk
         # If HEAD
         else:
@@ -128,9 +170,27 @@ class Sculptomat:
 
         # Set camera position
         XXX = 50
-        self._camera.localPosition = (  0 + rift_frame.position[0]*XXX,
-                                      -25 - rift_frame.position[2]*XXX,
-                                       15 + rift_frame.position[1]*XXX)
+        #self._camera.worldPosition = (  0 + rift_frame.position[0]*XXX,
+        #                              -25 - rift_frame.position[2]*XXX,
+        #                               15 + rift_frame.position[1]*XXX)
+
+        self._camera.worldPosition = ( rift_frame.position[0],
+                                       rift_frame.position[1] - 10,
+                                       rift_frame.position[2] + 5)
+
+        #fix = Euler((-1.5707963705062866, 0, 0), 'XYZ')
+        #orientation = Quaternion(rift_frame.orientation).to_euler()
+
+        #rot = Euler((-orientation.z, orientation.y, -orientation.x), 'XYZ')
+        #rot.rotate(fix)
+
+        self._camera.worldOrientation = \
+            Quaternion((0, 1, 0), radians(90))*Quaternion(rift_frame.orientation)*Quaternion((0, 1, 0), radians(90))
+
+        #self._camera.worldOrientation = (rift_frame.orientation[0],
+        #                                 rift_frame.orientation[1],
+        #                                 rift_frame.orientation[2],
+        #                                 rift_frame.orientation[3],)
 
         # If leap was unable to get a proper frame
         if not leap_frame.is_valid:
@@ -142,7 +202,9 @@ class Sculptomat:
             hand = self._hands[int(leap_hand.is_right)]
             for finger in leap_hand.fingers:
                 # TODO: positioner(*finger.tip_position) => leaking memory and never returns
-                hand.do_finger(finger.type(), set_position=positioner(finger.tip_position))
+                hand.do_finger(finger.type(), position=positioner(finger.tip_position))
+            #
+            hand.do_callbacks()
 
         ## Set surface
         #for vertex in self._surface:
@@ -185,4 +247,4 @@ class Sculptomat:
 
 #------------------------------------------------------------------------------#
 # Create a new game instance
-sculptomat = Sculptomat(mounted_on=DESK)
+sculptomat = Sculptomat(MOUNTED_ON_DESK)
