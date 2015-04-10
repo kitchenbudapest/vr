@@ -4,7 +4,7 @@
 **                                  =======                                   **
 **                                                                            **
 **        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         **
-**                       Version: 0.1.0.255 (20150410)                        **
+**                       Version: 0.1.0.265 (20150410)                        **
 **                          File: pyvr/src/oculus.c                           **
 **                                                                            **
 **               For more information about the project, visit                **

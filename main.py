@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.0.248 (20150410)                        ##
+##                       Version: 0.1.0.262 (20150410)                        ##
 ##                               File: main.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -117,6 +117,10 @@ class Sculptomat:
         #       - thumb + pinky  => deselect all
 
 
+        # TODO: fake casted shadow with negative lamp:
+        #       https://www.youtube.com/watch?v=iJUlqwKEdVQ
+
+
         def pinch(hand):
             # If user is pinching with thumb and index fingers
             if distance(hand.thumb.position,
@@ -132,14 +136,16 @@ class Sculptomat:
                 hand.thumb.color = hand.index.color = 1.0, 0.0, 0.0, 1.0
 
                 # Go through all vertices of surfaces
-                for vertex_face, vertex_wire in zip(self._srf_f, self._srf_w):
+                srf_f = self._srf_f
+                for i, vertex_wire in enumerate(self._srf_w):
                     # Check if pinching a vertex
-                    if (distance(hand.thumb.position, vertex_face.XYZ) < PINCH_VERTEX_FINGERS_DISTANCE or
-                        distance(hand.index.position, vertex_face.XYZ) < PINCH_VERTEX_FINGERS_DISTANCE):
+                    if (distance(hand.thumb.position, vertex_wire.XYZ) < PINCH_VERTEX_FINGERS_DISTANCE or
+                        distance(hand.index.position, vertex_wire.XYZ) < PINCH_VERTEX_FINGERS_DISTANCE):
                             # If so edit the vertex's position and stop iterating
                             # TODO: calculate the midpoint between index and thumb
                             hand.thumb.color = hand.index.color = 0.0, 1.0, 0.0, 0.5
-                            vertex_face.XYZ = vertex_wire.XYZ = hand.index.position
+                            vertex_wire.XYZ = hand.index.position
+                            srf_f[i].XYZ
                             hand.thumb_index_pinched_vertex = vertex_face, vertex_wire
                             return
             else:

@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.0.212 (20150408)                        ##
+##                       Version: 0.1.0.258 (20150410)                        ##
 ##                              File: surface.py                              ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -56,3 +56,7 @@ class Surface:
     def __iter__(self) -> 'KX_VertexProxy':
         for i in range(self._length):
             yield self._mesh.getVertex(self.MATERIAL_INDEX, i)
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def __getitem__(self, i):
+        return self._mesh.getVertex(self.MATERIAL_INDEX, i)
