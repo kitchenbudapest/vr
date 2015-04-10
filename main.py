@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.0.218 (20150408)                        ##
+##                       Version: 0.1.0.248 (20150410)                        ##
 ##                               File: main.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -84,13 +84,15 @@ class Sculptomat:
         # Create a new instance of the leap-motion controller
         self._leap_controller = Leap.Controller()
         # Create a new instance of the oculus-rift controller
-        self._rift_controller = oculus.OculusRiftDK2(device_index=0)
+        self._rift_controller = oculus.OculusRiftDK2(head_factor=10,    #  50
+                                                     head_shift_y=-20,  # -20
+                                                     head_shift_z=10)    #  10
         # Create a reference to the blender scene
         self._blender_scene = blender_scene = bge.logic.getCurrentScene()
 
         # Make references to blender objects
-        self._camera  = self._blender_scene.active_camera
-        self._origo   = self._blender_scene.objects[GLOBAL_OBJECT]
+        self._camera = self._blender_scene.active_camera
+        self._origo  = self._blender_scene.objects[GLOBAL_OBJECT]
 
         # Create finger blender objects from prototypes and
         # store their references inside Hand instances
@@ -100,7 +102,6 @@ class Sculptomat:
 
         # Create surface blender object from prototype and
         # store its reference inside a Surface instance
-        #self._surface = Surface(self._prototype_creator(PROTOTYPE_SURFACE))
         self._srf_f = Surface(self._prototype_creator('Prototype_Surface_face'))
         self._srf_w = Surface(self._prototype_creator('Prototype_Surface_wire'))
 
@@ -168,29 +169,10 @@ class Sculptomat:
         # Get current values of the leap-motion
         leap_frame = self._leap_controller.frame()
 
-        # Set camera position
-        XXX = 50
-        #self._camera.worldPosition = (  0 + rift_frame.position[0]*XXX,
-        #                              -25 - rift_frame.position[2]*XXX,
-        #                               15 + rift_frame.position[1]*XXX)
-
-        self._camera.worldPosition = ( rift_frame.position[0],
-                                       rift_frame.position[1] - 10,
-                                       rift_frame.position[2] + 5)
-
-        #fix = Euler((-1.5707963705062866, 0, 0), 'XYZ')
-        #orientation = Quaternion(rift_frame.orientation).to_euler()
-
-        #rot = Euler((-orientation.z, orientation.y, -orientation.x), 'XYZ')
-        #rot.rotate(fix)
-
+        # Set camera position and orientation
+        self._camera.worldPosition = rift_frame.position
         self._camera.worldOrientation = \
-            Quaternion((0, 1, 0), radians(90))*Quaternion(rift_frame.orientation)*Quaternion((0, 1, 0), radians(90))
-
-        #self._camera.worldOrientation = (rift_frame.orientation[0],
-        #                                 rift_frame.orientation[1],
-        #                                 rift_frame.orientation[2],
-        #                                 rift_frame.orientation[3],)
+            Quaternion((1, 0, 0), radians(80))*Quaternion(rift_frame.orientation)
 
         # If leap was unable to get a proper frame
         if not leap_frame.is_valid:
@@ -205,16 +187,6 @@ class Sculptomat:
                 hand.do_finger(finger.type(), position=positioner(finger.tip_position))
             #
             hand.do_callbacks()
-
-        ## Set surface
-        #for vertex in self._surface:
-        #    # If so, color that vertex to 'red'
-        #    if (distance(FINGERS[Leap.Finger.TYPE_THUMB].localPosition, vertex.getXYZ()) < 1.5 and
-        #        distance(FINGERS[Leap.Finger.TYPE_INDEX].localPosition, vertex.getXYZ()) < 1.5):
-        #            vertex.color = 1.0, 0.0, 0.0, 1.0  # red
-        #    # If not change the color back 'white'
-        #    else:
-        #        vertex.color = 1.0, 1.0, 1.0, 1.0  # white
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #

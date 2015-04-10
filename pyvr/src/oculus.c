@@ -4,7 +4,7 @@
 **                                  =======                                   **
 **                                                                            **
 **        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         **
-**                       Version: 0.1.0.227 (20150408)                        **
+**                       Version: 0.1.0.255 (20150410)                        **
 **                          File: pyvr/src/oculus.c                           **
 **                                                                            **
 **               For more information about the project, visit                **
@@ -259,6 +259,8 @@ typedef struct
 {
     PyObject_HEAD
     ovrHmd device;
+    float head_factor;
+    float head_shift[3];
 } oculus_OculusRiftDK2;
 
 
@@ -307,16 +309,30 @@ oculus_OculusRiftDK2_init(oculus_OculusRiftDK2 *self,
 
     /* TODO: make index optional !!! */
 
-    /* Unpack `index` */
-    int device_index;
-    static char *kwlist[] = {"device_index", NULL};
+    /* Set default values */
+    int device_index    = 0;
+    self->head_shift[0] = 0.f;
+    self->head_shift[1] = 0.f;
+    self->head_shift[2] = 0.f;
+    self->head_factor   = 1.f;
+
+    /* Unpack arguments */
+    static char *kwlist[] = {"device_index",
+                             "head_factor",
+                             "head_shift_x",
+                             "head_shift_y",
+                             "head_shift_z",
+                             NULL};
     if (!PyArg_ParseTupleAndKeywords(args,
                                      kwargs,
-                                     "i:__init__",
+                                     "|iffff:__init__",
                                      kwlist,
-                                     &device_index))
-        /* If `index` is not defined, set `0` as default value */
-        device_index = 0;
+                                     &device_index,
+                                     &self->head_factor,
+                                     self->head_shift + 0,
+                                     self->head_shift + 1,
+                                     self->head_shift + 2))
+        goto Init_Error_Python;
 
     /* Get the device */
     ovrHmd device = ovrHmd_Create(device_index);
@@ -342,7 +358,7 @@ oculus_OculusRiftDK2_init(oculus_OculusRiftDK2 *self,
     // if (error = ovrHmd_GetLastError(device))
     //     fprintf(stderr, "Error (init): '%s'\n", error);
 
-    /* If everything goes fine */
+    /* If everything went fine */
     self->device = device;
     return PYTHON_RETURN_VALUE_SUCCESS;
 
@@ -358,11 +374,12 @@ oculus_OculusRiftDK2_init(oculus_OculusRiftDK2 *self,
                                        "Cannot initialise Oculus device (No device found)",
                                        NULL);
     Init_Error:
-        self->device = NULL;
         _oculus_raise_python_exception(NULL,
                                        oculus_InitialisationError,
                                        "Cannot initialise Oculus SDK: '",
                                        "'\n(HINT: Is oculusd/ovrd running?)");
+    Init_Error_Python:
+        self->device = NULL;
         return PYTHON_RETURN_VALUE_FAILURE;
 }
 
@@ -409,9 +426,10 @@ oculus_OculusRiftDK2_frame(oculus_OculusRiftDK2 *self)
 
     /* Create python tuples and fill them with values and place them into
        another tuple, which will be the argument for the frame-object */
-    PyObject *position    = Py_BuildValue("(fff)",  head.Position.x,
-                                                    head.Position.y,
-                                                    head.Position.z),
+    PyObject *position    = Py_BuildValue("(fff)",
+                                          head.Position.x*self->head_factor + self->head_shift[0],
+                                          head.Position.y*self->head_factor + self->head_shift[1],
+                                          head.Position.z*self->head_factor + self->head_shift[2]),
              *orientation = Py_BuildValue("(ffff)", head.Orientation.w,
                                                     head.Orientation.x,
                                                     head.Orientation.y,
