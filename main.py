@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.0.262 (20150410)                        ##
+##                       Version: 0.1.0.266 (20150412)                        ##
 ##                               File: main.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -134,7 +134,8 @@ class Sculptomat:
         #       https://www.youtube.com/watch?v=iJUlqwKEdVQ
 
         self._grabbed = False
-        self._rotation = 0
+        # HACK: yuck.. this is getting out of hands now :(:(:(
+        self._vertex_origo = self._blender_scene.objects['Prototype_VertexSpheres']
 
         def pinch(hand):
             # TODO: while pinching, make other fingers hidden
@@ -192,7 +193,8 @@ class Sculptomat:
                     self._grabbed = True
                     left_hand.thumb.color  = left_hand.middle.color  = \
                     right_hand.thumb.color = right_hand.middle.color = 0, 0, 1, 1
-                    self._rotation += 1
+                    self._vertex_origo.applyRotation((0, 0, radians(2)))
+                    self._surface.update()
 
             else:
                 left_hand.middle.color = right_hand.middle.color = (1,)*4
@@ -233,10 +235,8 @@ class Sculptomat:
 
         # Set camera position and orientation
         self._camera.worldPosition = rift_frame.position
-        self._camera.worldOrientation =                     \
-            Quaternion((0, 0, 1), radians(self._rotation))* \
-            Quaternion((1, 0, 0), radians(80))*             \
-            Quaternion(rift_frame.orientation)
+        self._camera.worldOrientation = \
+            Quaternion((1, 0, 0), radians(80))*Quaternion(rift_frame.orientation)
 
         # If leap was unable to get a proper frame
         if not leap_frame.is_valid:

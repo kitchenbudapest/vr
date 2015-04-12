@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.0.212 (20150408)                        ##
+##                       Version: 0.1.0.266 (20150412)                        ##
 ##                               File: hand.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##

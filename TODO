@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.0.265 (20150410)                        ##
+##                       Version: 0.1.0.270 (20150412)                        ##
 ##                                 File: TODO                                 ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -27,7 +27,7 @@
 ##                                                                            ##
 ######################################################################## INFO ##
 
-#----------------------------- 7 POSTS IN 3 FILES -----------------------------#
+#----------------------------- 8 POSTS IN 3 FILES -----------------------------#
 TODO:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 1
@@ -41,7 +41,7 @@ TODO:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 2
   - file: main.py
-    line: 113
+    line: 126
     note: |
           pinches:
           - thumb + index  => move selected
@@ -52,7 +52,7 @@ TODO:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 3
   - file: main.py
-    line: 120
+    line: 133
     note: |
           fake casted shadow with negative lamp:
           https://www.youtube.com/watch?v=iJUlqwKEdVQ
@@ -60,30 +60,55 @@ TODO:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 4
   - file: main.py
-    line: 145
+    line: 141
     note: |
-          calculate the midpoint between index and thumb
+          while pinching, make other fingers hidden
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 5
   - file: main.py
-    line: 192
+    line: 167
+    note: |
+          calculate the midpoint between index and thumb
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 6
+  - file: main.py
+    line: 250
     note: |
           positioner(*finger.tip_position) => leaking memory and never returns
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 6
+  # 7
   - file: pyvr/build/oculus.c
     line: 310
     note: |
           make index optional !!! 
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 7
+  # 8
   - file: pyvr/src/oculus.c
     line: 310
     note: |
           make index optional !!! 
+
+
+
+#----------------------------- 2 POSTS IN 1 FILES -----------------------------#
+HACK:
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 1
+  - file: main.py
+    line: 137
+    note: |
+          yuck.. this is getting out of hands now :(:(:(
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 2
+  - file: main.py
+    line: 206
+    note: |
+          this is just a draft now, make elegant and "bullet-proof"
 
 
 
@@ -92,7 +117,7 @@ NOTE:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 1
   - file: main.py
-    line: 79
+    line: 85
     note: |
           local->global: http://blenderartists.org/forum/archive/index.php/t-180690.html
 
