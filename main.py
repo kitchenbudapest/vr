@@ -63,6 +63,12 @@ MINIFIER = 0.1
 PINCH_FINGERS_DISTANCE        = 2
 PINCH_VERTEX_FINGERS_DISTANCE = 1
 
+SPACE_KEY      = bge.events.SPACEKEY
+JUST_ACTIVATED = bge.logic.KX_INPUT_JUST_ACTIVATED
+
+GREEN_BASE = 0.000, 0.448, 0.205, 1.000
+GREEN_DARK = 0.000, 0.073, 0.036, 1.000
+GREEN_LITE = 0.000, 1.000, 0.448, 1.000
 
 # Helper functions
 #------------------------------------------------------------------------------#
@@ -102,12 +108,19 @@ class Sculptomat:
 
         # Create surface blender object from prototype and
         # store its reference inside a Surface instance
-        self._srf_f = Surface(self._prototype_creator('Prototype_Surface_face'))
-        self._srf_w = Surface(self._prototype_creator('Prototype_Surface_wire'))
+        self._surface = Surface(self._blender_scene.objects['Prototype_Surface_all'],
+                                self._blender_scene.objects['Prototype_VertexSpheres'],
+                                GREEN_DARK)
+
+        #self._surface = Surface(self._prototype_creator('Prototype_Surface_all'),
+        #                        self._prototype_creator('Prototype_VertexSpheres'))
+
+        #self._srf_f = Surface(self._prototype_creator('Prototype_Surface_face'))
+        #self._srf_w = Surface(self._prototype_creator('Prototype_Surface_wire'))
 
 
-        self._left_hand.thumb_index_pinched_vertex  = None, None
-        self._right_hand.thumb_index_pinched_vertex = None, None
+        self._left_hand.thumb_index_pinched_vertex  = None
+        self._right_hand.thumb_index_pinched_vertex = None
 
 
         # TODO: pinches:
@@ -120,15 +133,24 @@ class Sculptomat:
         # TODO: fake casted shadow with negative lamp:
         #       https://www.youtube.com/watch?v=iJUlqwKEdVQ
 
+        self._grabbed = False
+        self._rotation = 0
 
         def pinch(hand):
+            # TODO: while pinching, make other fingers hidden
+
+            if self._grabbed:
+                return
+
             # If user is pinching with thumb and index fingers
             if distance(hand.thumb.position,
                         hand.index.position) < PINCH_FINGERS_DISTANCE:
 
+                surface = self._surface
                 try:
-                    vertex_face, vertex_wire = hand.thumb_index_pinched_vertex
-                    vertex_face.XYZ = vertex_wire.XYZ = hand.index.position
+                    vertex = hand.thumb_index_pinched_vertex
+                    vertex.worldPosition = hand.index.position
+                    surface.update()
                     return
                 except AttributeError:
                     pass
@@ -136,22 +158,51 @@ class Sculptomat:
                 hand.thumb.color = hand.index.color = 1.0, 0.0, 0.0, 1.0
 
                 # Go through all vertices of surfaces
-                srf_f = self._srf_f
-                for i, vertex_wire in enumerate(self._srf_w):
+                for i, vertex in enumerate(surface):
                     # Check if pinching a vertex
-                    if (distance(hand.thumb.position, vertex_wire.XYZ) < PINCH_VERTEX_FINGERS_DISTANCE or
-                        distance(hand.index.position, vertex_wire.XYZ) < PINCH_VERTEX_FINGERS_DISTANCE):
+                    if (distance(hand.thumb.position, vertex.worldPosition) < PINCH_VERTEX_FINGERS_DISTANCE or
+                        distance(hand.index.position, vertex.worldPosition) < PINCH_VERTEX_FINGERS_DISTANCE):
                             # If so edit the vertex's position and stop iterating
                             # TODO: calculate the midpoint between index and thumb
-                            hand.thumb.color = hand.index.color = 0.0, 1.0, 0.0, 0.5
-                            vertex_wire.XYZ = hand.index.position
-                            srf_f[i].XYZ
-                            hand.thumb_index_pinched_vertex = vertex_face, vertex_wire
+                            hand.thumb.color = hand.index.color = 0.0, 1.0, 0.0, 0.35
+                            vertex.color = GREEN_LITE
+                            vertex.worldPosition = hand.index.position
+                            hand.thumb_index_pinched_vertex = vertex
+                            surface.update()
                             return
+            # If there is no pinch or pinch was released
             else:
-                hand.thumb_index_pinched_vertex = None, None
+                try:
+                    hand.thumb_index_pinched_vertex.color = GREEN_DARK
+                except AttributeError:
+                    pass
+                hand.thumb_index_pinched_vertex = None
                 hand.thumb.color = hand.index.color = 1.0, 1.0, 1.0, 1.0
 
+
+        def grab():
+            left_hand  = self._left_hand
+            right_hand = self._right_hand
+
+            # If both hands are pinching with middle fingers
+            if (distance(left_hand.thumb.position,
+                         left_hand.middle.position) < PINCH_FINGERS_DISTANCE and
+                distance(right_hand.thumb.position,
+                         right_hand.middle.position) < PINCH_FINGERS_DISTANCE):
+                    self._grabbed = True
+                    left_hand.thumb.color  = left_hand.middle.color  = \
+                    right_hand.thumb.color = right_hand.middle.color = 0, 0, 1, 1
+                    self._rotation += 1
+
+            else:
+                left_hand.middle.color = right_hand.middle.color = (1,)*4
+                self._grabbed = False
+
+
+
+
+        # HACK: this is just a draft now, make elegant and "bullet-proof"
+        self._callbacks = [grab]
 
         self._right_hand.append_callback('pinch', pinch)
         self._left_hand.append_callback('pinch', pinch)
@@ -170,6 +221,11 @@ class Sculptomat:
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def __call__(self):
+        # If user pressed the space bar => restart game
+        if bge.logic.keyboard.events[SPACE_KEY] == JUST_ACTIVATED:
+            bge.logic.restartGame()
+            return
+
         # Get current values of oculus-rift
         rift_frame = self._rift_controller.frame()
         # Get current values of the leap-motion
@@ -177,8 +233,10 @@ class Sculptomat:
 
         # Set camera position and orientation
         self._camera.worldPosition = rift_frame.position
-        self._camera.worldOrientation = \
-            Quaternion((1, 0, 0), radians(80))*Quaternion(rift_frame.orientation)
+        self._camera.worldOrientation =                     \
+            Quaternion((0, 0, 1), radians(self._rotation))* \
+            Quaternion((1, 0, 0), radians(80))*             \
+            Quaternion(rift_frame.orientation)
 
         # If leap was unable to get a proper frame
         if not leap_frame.is_valid:
@@ -193,6 +251,9 @@ class Sculptomat:
                 hand.do_finger(finger.type(), position=positioner(finger.tip_position))
             #
             hand.do_callbacks()
+        #
+        for callback in self._callbacks:
+            callback()
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #

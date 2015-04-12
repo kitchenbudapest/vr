@@ -46,17 +46,22 @@ class Surface:
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def __init__(self, surface_creator):
-        self._object = surface_creator()
-        self._mesh   = self._object.meshes[self.MESH_INDEX]
-        self._length = self._mesh.getVertexArrayLength(self.MATERIAL_INDEX)
+    def __init__(self, surface_creator, vertex_creator, base_color):
+        self._surface  = surface_creator#()
+        self._vertices = vertex_creator#()
+
+        for vertex in self._vertices.children:
+            vertex.color = base_color
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def __iter__(self) -> 'KX_VertexProxy':
-        for i in range(self._length):
-            yield self._mesh.getVertex(self.MATERIAL_INDEX, i)
+        yield from self._vertices.children
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def __getitem__(self, i):
-        return self._mesh.getVertex(self.MATERIAL_INDEX, i)
+        return self._vertices.children[i]
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def update(self):
+        self._surface.update()

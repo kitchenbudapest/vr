@@ -103,9 +103,10 @@ class Hand:
     def __init__(self, finger_creator):
         self._callbacks = OrderedDict()
         self._fingers = fingers = OrderedDict()
-        for finger, details in FINGER_CONSTS:
+        for i, (finger, details) in enumerate(FINGER_CONSTS):
             # Create blender object from prototype
-            object = Finger(finger_creator(localScale=(details['scale_factor'],)*3))
+            object = Finger(finger_creator(localScale=(details['scale_factor'],)*3,
+                                           worldPosition=(i, 0, 0)))
 
             # Make finger accessible through this hand as a member
             setattr(self, finger, object)
