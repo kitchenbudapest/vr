@@ -4,8 +4,8 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.0.271 (20150413)                        ##
-##                              File: surface.py                              ##
+##                       Version: 0.1.1.290 (20150413)                        ##
+##                               File: const.py                               ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
 ##                            <http://vr.kibu.hu>.                            ##
@@ -27,43 +27,41 @@
 ##                                                                            ##
 ######################################################################## INFO ##
 
-#------------------------------------------------------------------------------#
-class Surface:
+# Import python modules
+from math import radians
 
-    MESH_INDEX     = 0
-    MATERIAL_INDEX = 0
+# Import blender modules
+from mathutils import Quaternion
 
-    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    @property
-    def position(self):
-        return self._object.worldPosition
+# Blender object names
+OBJ_PROTOTYPE_FINGER     = 'Prototype_Finger'
+OBJ_PROTOTYPE_SURFACE    = 'Prototype_Surface_all'
+OBJ_PROTOTYPE_VERTEX_ALL = 'Prototype_VertexSpheres'
+OBJ_GLOBAL               = 'Origo'
 
+# Colors
+COLOR_GEOMETRY_BASE      = 0.000, 0.448, 0.205, 1.000
+COLOR_GEOMETRY_DARK      = 0.000, 0.073, 0.036, 1.000
+COLOR_GEOMETRY_LITE      = 0.000, 1.000, 0.448, 1.000
 
-    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    @property
-    def orientation(self):
-        return self._object.worldOrientation
+COLOR_FINGER_BASE        = 1.000, 1.000, 1.000, 1.000
+COLOR_GRAB_PINCH_BASE    = COLOR_FINGER_BASE
+COLOR_GRAB_PINCH_OKAY    = 0.000, 1.000, 0.000, 0.350
+COLOR_GRAB_PINCH_FAIL    = 1.000, 0.000, 0.000, 1.000
 
+COLOR_ROTATE_PINCH_BASE  = COLOR_FINGER_BASE
+COLOR_ROTATE_PINCH_OKAY  = 0.000, 0.000, 1.000, 1.000
 
-    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def __init__(self, surface_creator, vertex_creator, base_color):
-        self._surface  = surface_creator#()
-        self._vertices = vertex_creator#()
+# Sizes
+SIZE_FINGER_THUMB        = 1.00
+SIZE_FINGER_INDEX        = 0.60
+SIZE_FINGER_MIDDLE       = 0.70
+SIZE_FINGER_RING         = 0.60
+SIZE_FINGER_PINKY        = 0.55
 
-        for vertex in self._vertices.children:
-            vertex.color = base_color
-
-
-    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def __iter__(self) -> 'KX_VertexProxy':
-        yield from self._vertices.children
-
-
-    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def __getitem__(self, i) -> 'KX_VertexProxy':
-        return self._vertices.children[i]
-
-
-    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def update(self):
-        self._surface.update()
+# Hardware fine-tuning
+LEAP_MULTIPLIER          =  0.1
+RIFT_MULTIPLIER          =  10
+RIFT_POSITION_SHIFT_Y    = -20
+RIFT_POSITION_SHIFT_Z    =  10
+RIFT_ORIENTATION_SHIFT   = Quaternion((1, 0, 0), radians(80))

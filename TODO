@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.0.270 (20150412)                        ##
+##                       Version: 0.1.1.294 (20150413)                        ##
 ##                                 File: TODO                                 ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -32,7 +32,7 @@ TODO:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 1
   - file: main.py
-    line: 49
+    line: 68
     note: |
           make build-script work :)
           Import cutils modules => versioning
@@ -41,7 +41,7 @@ TODO:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 2
   - file: main.py
-    line: 126
+    line: 139
     note: |
           pinches:
           - thumb + index  => move selected
@@ -52,7 +52,7 @@ TODO:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 3
   - file: main.py
-    line: 133
+    line: 146
     note: |
           fake casted shadow with negative lamp:
           https://www.youtube.com/watch?v=iJUlqwKEdVQ
@@ -60,21 +60,21 @@ TODO:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 4
   - file: main.py
-    line: 141
+    line: 153
     note: |
           while pinching, make other fingers hidden
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 5
   - file: main.py
-    line: 167
+    line: 181
     note: |
           calculate the midpoint between index and thumb
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 6
   - file: main.py
-    line: 250
+    line: 265
     note: |
           positioner(*finger.tip_position) => leaking memory and never returns
 
@@ -94,21 +94,14 @@ TODO:
 
 
 
-#----------------------------- 2 POSTS IN 1 FILES -----------------------------#
+#----------------------------- 1 POSTS IN 1 FILES -----------------------------#
 HACK:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 1
   - file: main.py
-    line: 137
+    line: 149
     note: |
           yuck.. this is getting out of hands now :(:(:(
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 2
-  - file: main.py
-    line: 206
-    note: |
-          this is just a draft now, make elegant and "bullet-proof"
 
 
 
@@ -117,7 +110,7 @@ NOTE:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 1
   - file: main.py
-    line: 85
+    line: 97
     note: |
           local->global: http://blenderartists.org/forum/archive/index.php/t-180690.html
 

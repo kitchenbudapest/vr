@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.0.266 (20150412)                        ##
+##                       Version: 0.1.1.290 (20150413)                        ##
 ##                               File: main.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -29,7 +29,7 @@
 
 # Import python modules
 from math import sqrt, radians
-from sys import path as sys_path
+from sys import path as sys_path, stderr
 
 # Import leap modules
 sys_path.insert(0, '/usr/lib/Leap')
@@ -43,8 +43,27 @@ import bge
 from mathutils import Vector, Matrix, Euler, Quaternion
 
 # Import user modules
+from hand import Hands
 from surface import Surface
-from hand import Hand
+
+# Import global level constants
+from const import (OBJ_PROTOTYPE_FINGER,
+                   OBJ_PROTOTYPE_SURFACE,
+                   OBJ_PROTOTYPE_VERTEX_ALL,
+                   OBJ_GLOBAL,
+                   COLOR_GEOMETRY_BASE,
+                   COLOR_GEOMETRY_DARK,
+                   COLOR_GEOMETRY_LITE,
+                   COLOR_GRAB_PINCH_BASE,
+                   COLOR_GRAB_PINCH_OKAY,
+                   COLOR_GRAB_PINCH_FAIL,
+                   COLOR_ROTATE_PINCH_BASE,
+                   COLOR_ROTATE_PINCH_OKAY,
+                   LEAP_MULTIPLIER,
+                   RIFT_MULTIPLIER,
+                   RIFT_POSITION_SHIFT_Y,
+                   RIFT_POSITION_SHIFT_Z,
+                   RIFT_ORIENTATION_SHIFT)
 
 # TODO: make build-script work :)
 # Import cutils modules => versioning
@@ -52,13 +71,9 @@ from hand import Hand
 
 
 # Module level constants
-#------------------------------------------------------------------------------#
-PROTOTYPE_FINGER  = 'Prototype_Finger'
-PROTOTYPE_SURFACE = 'Prototype_Surface'
-GLOBAL_OBJECT     = 'Origo'
-MOUNTED_ON_HEAD   = 0
-MOUNTED_ON_DESK   = 1
-MINIFIER = 0.1
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+MOUNTED_ON_HEAD = 0
+MOUNTED_ON_DESK = 1
 
 PINCH_FINGERS_DISTANCE        = 2
 PINCH_VERTEX_FINGERS_DISTANCE = 1
@@ -66,9 +81,6 @@ PINCH_VERTEX_FINGERS_DISTANCE = 1
 SPACE_KEY      = bge.events.SPACEKEY
 JUST_ACTIVATED = bge.logic.KX_INPUT_JUST_ACTIVATED
 
-GREEN_BASE = 0.000, 0.448, 0.205, 1.000
-GREEN_DARK = 0.000, 0.073, 0.036, 1.000
-GREEN_LITE = 0.000, 1.000, 0.448, 1.000
 
 # Helper functions
 #------------------------------------------------------------------------------#
@@ -90,27 +102,29 @@ class Sculptomat:
         # Create a new instance of the leap-motion controller
         self._leap_controller = Leap.Controller()
         # Create a new instance of the oculus-rift controller
-        self._rift_controller = oculus.OculusRiftDK2(head_factor=10,    #  50
-                                                     head_shift_y=-20,  # -20
-                                                     head_shift_z=10)    #  10
+        self._rift_controller = oculus.OculusRiftDK2(head_factor =RIFT_MULTIPLIER,
+                                                     head_shift_y=RIFT_POSITION_SHIFT_Y,
+                                                     head_shift_z=RIFT_POSITION_SHIFT_Z)
         # Create a reference to the blender scene
         self._blender_scene = blender_scene = bge.logic.getCurrentScene()
 
         # Make references to blender objects
         self._camera = self._blender_scene.active_camera
-        self._origo  = self._blender_scene.objects[GLOBAL_OBJECT]
+        self._origo  = self._blender_scene.objects[OBJ_GLOBAL]
 
-        # Create finger blender objects from prototypes and
-        # store their references inside Hand instances
-        finger_creator = self._prototype_creator(PROTOTYPE_FINGER)
+        # Create hands,
+        self._hands = Hands(self._prototype_creator(OBJ_PROTOTYPE_FINGER))
+
+
+
         self._left_hand  = Hand(finger_creator)
         self._right_hand = Hand(finger_creator)
 
         # Create surface blender object from prototype and
         # store its reference inside a Surface instance
-        self._surface = Surface(self._blender_scene.objects['Prototype_Surface_all'],
-                                self._blender_scene.objects['Prototype_VertexSpheres'],
-                                GREEN_DARK)
+        self._surface = Surface(self._blender_scene.objects[OBJ_PROTOTYPE_SURFACE],
+                                self._blender_scene.objects[OBJ_PROTOTYPE_VERTEX_ALL],
+                                COLOR_GEOMETRY_DARK)
 
         #self._surface = Surface(self._prototype_creator('Prototype_Surface_all'),
         #                        self._prototype_creator('Prototype_VertexSpheres'))
@@ -118,9 +132,8 @@ class Sculptomat:
         #self._srf_f = Surface(self._prototype_creator('Prototype_Surface_face'))
         #self._srf_w = Surface(self._prototype_creator('Prototype_Surface_wire'))
 
-
-        self._left_hand.thumb_index_pinched_vertex  = None
-        self._right_hand.thumb_index_pinched_vertex = None
+        self._hands.left.set_states(thumb_index_pinched_vertex=None)
+        self._hands.right.set_states(thumb_index_pinched_vertex=None)
 
 
         # TODO: pinches:
@@ -133,15 +146,16 @@ class Sculptomat:
         # TODO: fake casted shadow with negative lamp:
         #       https://www.youtube.com/watch?v=iJUlqwKEdVQ
 
-        self._grabbed = False
         # HACK: yuck.. this is getting out of hands now :(:(:(
-        self._vertex_origo = self._blender_scene.objects['Prototype_VertexSpheres']
+        self._vertex_origo = self._blender_scene.objects[OBJ_PROTOTYPE_VERTEX_ALL]
 
-        def pinch(hand):
+        def pinch(states):
             # TODO: while pinching, make other fingers hidden
 
-            if self._grabbed:
+            if states['grabbed']:
                 return
+
+            hand = states['hand']
 
             # If user is pinching with thumb and index fingers
             if distance(hand.thumb.position,
@@ -156,7 +170,7 @@ class Sculptomat:
                 except AttributeError:
                     pass
 
-                hand.thumb.color = hand.index.color = 1.0, 0.0, 0.0, 1.0
+                hand.thumb.color = hand.index.color = COLOR_GRAB_PINCH_FAIL
 
                 # Go through all vertices of surfaces
                 for i, vertex in enumerate(surface):
@@ -165,8 +179,8 @@ class Sculptomat:
                         distance(hand.index.position, vertex.worldPosition) < PINCH_VERTEX_FINGERS_DISTANCE):
                             # If so edit the vertex's position and stop iterating
                             # TODO: calculate the midpoint between index and thumb
-                            hand.thumb.color = hand.index.color = 0.0, 1.0, 0.0, 0.35
-                            vertex.color = GREEN_LITE
+                            hand.thumb.color = hand.index.color = COLOR_GRAB_PINCH_OKAY
+                            vertex.color = COLOR_GEOMETRY_LITE
                             vertex.worldPosition = hand.index.position
                             hand.thumb_index_pinched_vertex = vertex
                             surface.update()
@@ -174,40 +188,41 @@ class Sculptomat:
             # If there is no pinch or pinch was released
             else:
                 try:
-                    hand.thumb_index_pinched_vertex.color = GREEN_DARK
+                    hand.thumb_index_pinched_vertex.color = COLOR_GEOMETRY_DARK
                 except AttributeError:
                     pass
                 hand.thumb_index_pinched_vertex = None
-                hand.thumb.color = hand.index.color = 1.0, 1.0, 1.0, 1.0
+                hand.thumb.color = hand.index.color = COLOR_GRAB_PINCH_BASE
 
 
-        def grab():
-            left_hand  = self._left_hand
-            right_hand = self._right_hand
+        def grab(states):
+            left_hand  = states['left_hand']
+            right_hand = states['right_hand']
 
             # If both hands are pinching with middle fingers
             if (distance(left_hand.thumb.position,
                          left_hand.middle.position) < PINCH_FINGERS_DISTANCE and
                 distance(right_hand.thumb.position,
                          right_hand.middle.position) < PINCH_FINGERS_DISTANCE):
-                    self._grabbed = True
+                    left_hand.set_states(grabbed=True)
+                    right_hand.set_states(grabbed=True)
                     left_hand.thumb.color  = left_hand.middle.color  = \
-                    right_hand.thumb.color = right_hand.middle.color = 0, 0, 1, 1
+                    right_hand.thumb.color = right_hand.middle.color = COLOR_ROTATE_PINCH_OKAY
                     self._vertex_origo.applyRotation((0, 0, radians(2)))
                     self._surface.update()
 
             else:
-                left_hand.middle.color = right_hand.middle.color = (1,)*4
-                self._grabbed = False
+                left_hand.middle.color = right_hand.middle.color = COLOR_ROTATE_PINCH_BASE
+                left_hand.set_states(grabbed=False)
+                right_hand.set_states(grabbed=False)
 
 
 
 
-        # HACK: this is just a draft now, make elegant and "bullet-proof"
-        self._callbacks = [grab]
-
-        self._right_hand.append_callback('pinch', pinch)
-        self._left_hand.append_callback('pinch', pinch)
+        # Set callbacks
+        self._hands.append_callback('grab', grab)
+        self._hands.right.append_callback('pinch', pinch)
+        self._hands.left.append_callback('pinch', pinch)
 
         # Set position setter
         # If DESK
@@ -236,48 +251,49 @@ class Sculptomat:
         # Set camera position and orientation
         self._camera.worldPosition = rift_frame.position
         self._camera.worldOrientation = \
-            Quaternion((1, 0, 0), radians(80))*Quaternion(rift_frame.orientation)
+            RIFT_ORIENTATION_SHIFT*Quaternion(rift_frame.orientation)
 
         # If leap was unable to get a proper frame
         if not leap_frame.is_valid:
-            return print('(leap) Invalid frame')
+            return print('(leap) Invalid frame', file=stderr)
 
         # If leap was able to get the frame set finger positions
         positioner = self._positioner
         for leap_hand in leap_frame.hands:
-            hand = self._hands[int(leap_hand.is_right)]
+            hand = self._hands.right if leap_hand.is_right else self._hands.left
             for finger in leap_hand.fingers:
                 # TODO: positioner(*finger.tip_position) => leaking memory and never returns
-                hand.do_finger(finger.type(), position=positioner(finger.tip_position))
+                hand.execute_callbacks('finger-position')
+                hand.do_finger(finger.type(),
+                               position=positioner(finger.tip_position))
             #
-            hand.do_callbacks()
+            hand.execute_all_callbacks()
         #
-        for callback in self._callbacks:
-            callback()
+        self._hands.execute_all_callbacks()
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def _positioner_on_head(self, position):
         # The USB cable is on the right side and
         # the indicator light is on the top
-        return (position[0] * -MINIFIER,
-                position[1] *  MINIFIER - 10,
-                position[2] * -MINIFIER + 10)
+        return (position[0] * -LEAP_MULTIPLIER,
+                position[1] *  LEAP_MULTIPLIER - 10,
+                position[2] * -LEAP_MULTIPLIER + 10)
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def _positioner_on_desk(self, position):
         # The USB cable is on the right side and
         # the indicator light is at the back
-        return (position[0] *  MINIFIER,
-                position[2] * -MINIFIER,
-                position[1] *  MINIFIER - 10)
+        return (position[0] *  LEAP_MULTIPLIER,
+                position[2] * -LEAP_MULTIPLIER,
+                position[1] *  LEAP_MULTIPLIER - 10)
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def _prototype_creator(self, prototype):
         def creator(**preferences):
-            object = self._blender_scene.addObject(prototype, GLOBAL_OBJECT)
+            object = self._blender_scene.addObject(prototype, OBJ_GLOBAL)
             for preference, value in preferences.items():
                 setattr(object, preference, value)
             return object

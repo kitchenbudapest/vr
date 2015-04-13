@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.0.266 (20150412)                        ##
+##                       Version: 0.1.1.285 (20150413)                        ##
 ##                               File: hand.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -35,75 +35,78 @@ from collections import OrderedDict
 sys_path.insert(0, '/usr/lib/Leap')
 import Leap
 
-FINGER_CONSTS = [('thumb' , {'leap_type'    : Leap.Finger.TYPE_THUMB,
-                             'scale_factor' : 1.00}),
-                 ('index' , {'leap_type'    : Leap.Finger.TYPE_INDEX,
-                             'scale_factor' : 0.60}),
-                 ('middle', {'leap_type'    : Leap.Finger.TYPE_MIDDLE,
-                             'scale_factor' : 0.70}),
-                 ('ring'  , {'leap_type'    : Leap.Finger.TYPE_RING,
-                             'scale_factor' : 0.60}),
-                 ('pinky' , {'leap_type'    : Leap.Finger.TYPE_PINKY,
-                             'scale_factor' : 0.55})]
+# Import user modules
+from callback import CallbackManager
+
+# Import global level constants
+from const import (SIZE_FINGER_THUMB,
+                   SIZE_FINGER_INDEX,
+                   SIZE_FINGER_MIDDLE,
+                   SIZE_FINGER_RING,
+                   SIZE_FINGER_PINKY)
+
+
 
 #------------------------------------------------------------------------------#
-class Finger:
+class Finger(CallbackManager):
+
+    # Class level constants
+    REFERENCES = 'position', 'scale', 'color'
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     @property
     def position(self):
         return self._object.worldPosition
+
     @position.setter
     def position(self, value):
         object = self._object
         object.worldPosition = value
-        for callback in self._callbacks['position']:
-            callback(object)
+        self.execute_callbacks('position')
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     @property
     def color(self):
         return self._object.color
+
     @color.setter
     def color(self, value):
         object = self._object
         object.color = value
-        for callback in self._callbacks['color']:
-            callback(object)
+        self.execute_callbacks('color')
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def __init__(self, object):
+    def __init__(self, object, *args, **kwargs):
+        super().__init__(valid_references=self.REFERENCES, *args, **kwargs)
         self._object = object
-        self._callbacks = OrderedDict([('position', []),
-                                       ('scale'   , []),
-                                       ('color'   , [])])
-
-    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def append_callback(self, reference, function):
-        try:
-            self._callbacks[reference].append(function)
-        except KeyError:
-            raise KeyError('Finger object has no callback '
-                           'reference {!r}'.format(reference))
-
-
-    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def clear_callback(self, reference):
-        if reference in self._callbacks:
-            self._callbacks[reference] = []
+        self.set_states(finger=object)
 
 
 
 #------------------------------------------------------------------------------#
-class Hand:
+class Hand(CallbackManager):
+
+    # Class level constants
+    FINGER_CONSTS = [('thumb' , {'leap_type'    : Leap.Finger.TYPE_THUMB,
+                                 'scale_factor' : SIZE_FINGER_THUMB}),
+                     ('index' , {'leap_type'    : Leap.Finger.TYPE_INDEX,
+                                 'scale_factor' : SIZE_FINGER_INDEX}),
+                     ('middle', {'leap_type'    : Leap.Finger.TYPE_MIDDLE,
+                                 'scale_factor' : SIZE_FINGER_MIDDLE}),
+                     ('ring'  , {'leap_type'    : Leap.Finger.TYPE_RING,
+                                 'scale_factor' : SIZE_FINGER_RING}),
+                     ('pinky' , {'leap_type'    : Leap.Finger.TYPE_PINKY,
+                                 'scale_factor' : SIZE_FINGER_PINKY})]
+
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def __init__(self, finger_creator):
-        self._callbacks = OrderedDict()
+    def __init__(self, finger_creator, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
         self._fingers = fingers = OrderedDict()
-        for i, (finger, details) in enumerate(FINGER_CONSTS):
+        for i, (finger, details) in enumerate(self.FINGER_CONSTS):
             # Create blender object from prototype
             object = Finger(finger_creator(localScale=(details['scale_factor'],)*3,
                                            worldPosition=(i, 0, 0)))
@@ -116,30 +119,6 @@ class Hand:
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def __repr__(self):
-        return ('Hand(thumb={}, index={}, middle={}, '
-                'ring={}, pinky={})').format(*self._fingers.values())
-
-
-    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def append_callback(self, reference, callback):
-        self._callbacks[reference] = callback
-
-
-    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def clear_callback(self, reference):
-        try:
-            del self._callbacks[reference]
-        except KeyError:
-            pass
-
-
-    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def do_callbacks(self):
-        for callback in self._callbacks.values():
-            callback(self)
-
-    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def do_finger(self, finger_leap_type, **actions):
         finger = self._fingers[finger_leap_type]
         for action, value in actions.items():
@@ -147,3 +126,33 @@ class Hand:
                 getattr(finger, action)(value)
             except TypeError:
                 setattr(finger, action, value)
+
+
+
+#------------------------------------------------------------------------------#
+class Hands(CallbackManager):
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    @property
+    def left(self):
+        return self._left
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    @property
+    def right(self):
+        return self._right
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def __init__(self, finger_creator, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Create both hands
+        self._left  = Hand(finger_creator)
+        self._right = Hand(finger_creator)
+
+        # Create references to hands, which will be passed as
+        # arguments during the execution of callbacks
+        self.set_states(left_hand  = self._left,
+                        right_hand = self._right)
