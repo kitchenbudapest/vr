@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.1.280 (20150413)                        ##
+##                       Version: 0.1.2.313 (20150414)                        ##
 ##                             File: callback.py                              ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -27,6 +27,9 @@
 ##                                                                            ##
 ######################################################################## INFO ##
 
+# Import python modules
+from collections import OrderedDict
+
 #------------------------------------------------------------------------------#
 class CallbackManager:
 
@@ -39,10 +42,10 @@ class CallbackManager:
         self._states    = {}
         if valid_references is None:
             self._restricted = False
-            self._callbacks  = OrderedDict.fromkeys(valid_references, [])
+            self._callbacks  = OrderedDict()
         else:
             self._restricted = True
-            self._callbacks  = OrderedDict()
+            self._callbacks  = OrderedDict.fromkeys(valid_references, [])
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #

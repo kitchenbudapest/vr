@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.1.285 (20150413)                        ##
+##                       Version: 0.1.2.326 (20150414)                        ##
 ##                               File: hand.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -119,13 +119,8 @@ class Hand(CallbackManager):
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def do_finger(self, finger_leap_type, **actions):
-        finger = self._fingers[finger_leap_type]
-        for action, value in actions.items():
-            try:
-                getattr(finger, action)(value)
-            except TypeError:
-                setattr(finger, action, value)
+    def finger_by_leap(self, leap_type):
+        return self._fingers[leap_type]
 
 
 

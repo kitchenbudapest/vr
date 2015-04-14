@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.0.266 (20150412)                        ##
+##                       Version: 0.1.2.338 (20150414)                        ##
 ##                             File: generator.py                             ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -27,6 +27,10 @@
 ##                                                                            ##
 ######################################################################## INFO ##
 
+# Import python modules
+from itertools import repeat
+
+# Import blender modules
 import bpy
 
 scenes = bpy.data.scenes
@@ -44,3 +48,32 @@ meshes = bpy.data.meshes
 bpy.ops.scene.new(type='EMPTY')
 scene = scenes[-1]
 print(scene)
+
+
+#------------------------------------------------------------------------------#
+def _add_constraint_to_bones(armature_name, constraint_type, target_names, details):
+    for bone, target_name in zip(bpy.data.objects[armature_name].pose.bones, target_names):
+        constraint = bone.constraints.new(constraint_type)
+        constraint.target = bpy.data.objects[target_name]
+        for key, value in details.items():
+            setattr(constraint, key, value)
+
+
+#------------------------------------------------------------------------------#
+# Convenient wrapper
+def add_rotation_constraint_to_bones(armature_name, target_names, **details):
+    _add_constraint_to_bones(armature_name, 'COPY_ROTATION', target_names, details)
+
+
+#------------------------------------------------------------------------------#
+# Convenient wrapper
+def add_location_constraint_to_bones(armature_name, target_names, **details):
+    _add_constraint_to_bones(armature_name, 'COPY_LOCATION', target_names, details)
+
+
+#------------------------------------------------------------------------------#
+# Calling 'adder' function
+add_rotation_constraint_to_bones('Prototype_Surface_all',
+                                 repeat('Prototype_VertexSpheres'),
+                                 use_x=False,
+                                 use_y=False)

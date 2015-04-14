@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.1.294 (20150413)                        ##
+##                       Version: 0.1.2.344 (20150414)                        ##
 ##                                 File: TODO                                 ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -27,21 +27,26 @@
 ##                                                                            ##
 ######################################################################## INFO ##
 
-#----------------------------- 8 POSTS IN 3 FILES -----------------------------#
+#----------------------------- 8 POSTS IN 4 FILES -----------------------------#
 TODO:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 1
-  - file: main.py
-    line: 68
+  - file: pyvr/build/oculus.c
+    line: 310
     note: |
-          make build-script work :)
-          Import cutils modules => versioning
-          import build
+          make index optional !!! 
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 2
+  - file: pyvr/src/oculus.c
+    line: 310
+    note: |
+          make index optional !!! 
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 3
   - file: main.py
-    line: 139
+    line: 71
     note: |
           pinches:
           - thumb + index  => move selected
@@ -50,56 +55,61 @@ TODO:
           - thumb + pinky  => deselect all
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 3
-  - file: main.py
-    line: 146
-    note: |
-          fake casted shadow with negative lamp:
-          https://www.youtube.com/watch?v=iJUlqwKEdVQ
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 4
   - file: main.py
-    line: 153
+    line: 117
     note: |
           while pinching, make other fingers hidden
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 5
   - file: main.py
-    line: 181
+    line: 147
     note: |
           calculate the midpoint between index and thumb
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 6
-  - file: main.py
-    line: 265
+  - file: app.py
+    line: 60
     note: |
-          positioner(*finger.tip_position) => leaking memory and never returns
+          make build-script work :)
+          Import cutils modules => versioning
+          import build
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 7
-  - file: pyvr/build/oculus.c
-    line: 310
+  - file: app.py
+    line: 125
     note: |
-          make index optional !!! 
+          fake casted shadow with negative lamp:
+          https://www.youtube.com/watch?v=iJUlqwKEdVQ
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 8
-  - file: pyvr/src/oculus.c
-    line: 310
+  - file: app.py
+    line: 170
     note: |
-          make index optional !!! 
+          positioner(*finger.tip_position) => leaking memory and never returns
 
 
 
-#----------------------------- 1 POSTS IN 1 FILES -----------------------------#
+#----------------------------- 2 POSTS IN 1 FILES -----------------------------#
 HACK:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 1
-  - file: main.py
-    line: 149
+  - file: app.py
+    line: 117
+    note: |
+          Surface arguments should be protoype_creator methods, instead of
+          actual objects, but right now, prototyping the surface object
+          with its armature and all bones are not copying.. or something
+          like that..
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 2
+  - file: app.py
+    line: 128
     note: |
           yuck.. this is getting out of hands now :(:(:(
 
@@ -109,8 +119,8 @@ HACK:
 NOTE:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 1
-  - file: main.py
-    line: 97
+  - file: app.py
+    line: 79
     note: |
           local->global: http://blenderartists.org/forum/archive/index.php/t-180690.html
 
