@@ -4,8 +4,8 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.2.345 (20150414)                        ##
-##                             File: generator.py                             ##
+##                       Version: 0.1.2.357 (20150416)                        ##
+##                      File: pylinmath/linmath_test.py                       ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
 ##                            <http://vr.kibu.hu>.                            ##
@@ -27,56 +27,10 @@
 ##                                                                            ##
 ######################################################################## INFO ##
 
-# Import python modules
-from itertools import repeat
+from linmath import Vec3
 
-# Import blender modules
-import bpy
-
-scenes = bpy.data.scenes
-meshes = bpy.data.meshes
-
-## Remove all objects from all scenes
-## and remove all scenes as well
-#for scene in scenes:
-#    for object in scene.objects:
-#        meshes.remove(object)
-#    scenes.remove(scene)
-## check: http://blenderscripting.blogspot.hu/2012/03/deleting-objects-from-scene.html
-
-# Useful demo:
-# http://wiki.blender.org/index.php/Dev:2.5/Py/Scripts/Cookbook/Code_snippets/Armatures
-
-# Create a new scene
-bpy.ops.scene.new(type='EMPTY')
-scene = scenes[-1]
-print(scene)
-
-
-#------------------------------------------------------------------------------#
-def _add_constraint_to_bones(armature_name, constraint_type, target_names, details):
-    for bone, target_name in zip(bpy.data.objects[armature_name].pose.bones, target_names):
-        constraint = bone.constraints.new(constraint_type)
-        constraint.target = bpy.data.objects[target_name]
-        for key, value in details.items():
-            setattr(constraint, key, value)
-
-
-#------------------------------------------------------------------------------#
-# Convenient wrapper
-def add_rotation_constraint_to_bones(armature_name, target_names, **details):
-    _add_constraint_to_bones(armature_name, 'COPY_ROTATION', target_names, details)
-
-
-#------------------------------------------------------------------------------#
-# Convenient wrapper
-def add_location_constraint_to_bones(armature_name, target_names, **details):
-    _add_constraint_to_bones(armature_name, 'COPY_LOCATION', target_names, details)
-
-
-#------------------------------------------------------------------------------#
-# Calling 'adder' function
-add_rotation_constraint_to_bones('Prototype_Surface_all',
-                                 repeat('Prototype_VertexSpheres'),
-                                 use_x=False,
-                                 use_y=False)
+v1 = Vec3(1, 2, 3)
+v2 = Vec3(4, 5, 6)
+print(v1)
+print(v2)
+print(v1 + v2)

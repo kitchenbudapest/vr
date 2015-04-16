@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.2.333 (20150414)                        ##
+##                       Version: 0.1.2.357 (20150416)                        ##
 ##                               File: main.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -74,6 +74,8 @@ class KibuVR(Application):
         #       - thumb + ring   => deselect
         #       - thumb + pinky  => deselect all
 
+        self._prev_orientation_line = None
+
         # Set callback-states which will be used
         # duyring the execution of the callbacks
         self.hands.left.set_states(grabbed=False,
@@ -101,11 +103,24 @@ class KibuVR(Application):
                 grabbed = True
                 left.thumb.color  = left.middle.color  = \
                 right.thumb.color = right.middle.color = COLOR_ROTATE_PINCH_OKAY
-                self.vertex_origo.applyRotation((0, 0, radians(2)))
-                self.surface.update()
+
+                # If previous orientation line has coordinates
+                try:
+                    prev_left_position, prev_right_position = self._prev_orientation_line
+
+
+                    self.vertex_origo.applyRotation((0, 0, radians(2)))
+
+
+                    self.surface.update()
+                # If this was the first grab
+                except TypeError:
+                    pass
+                self._prev_orientation_line = left.thumb.position, right.thumb.position
         # If only one or none of the hands are pinching with thumb and middle
         else:
             left.middle.color = right.middle.color = COLOR_ROTATE_PINCH_BASE
+            self._prev_orientation_line = None
 
         # Set hand-level callback state
         left.set_states(grabbed=grabbed)

@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.2.333 (20150414)                        ##
+##                       Version: 0.1.2.351 (20150415)                        ##
 ##                                File: app.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -173,6 +173,15 @@ class Application:
             hand.execute_all_callbacks()
         #
         self._hands.execute_all_callbacks()
+
+        # TODO: In the following order should things executed:
+        #           1) both hands => it can block a single hand
+        #           2) one hand   => it can block a single finger
+        #           3) one finger
+        #       Try to make the access of data and the execution of callbacks to
+        #       a single (optimised) loop if possible
+
+        #print(leap_frame.images)
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #

@@ -4,8 +4,8 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.2.345 (20150414)                        ##
-##                             File: generator.py                             ##
+##                       Version: 0.1.2.357 (20150416)                        ##
+##                         File: pylinmath/SConstruct                         ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
 ##                            <http://vr.kibu.hu>.                            ##
@@ -27,56 +27,55 @@
 ##                                                                            ##
 ######################################################################## INFO ##
 
+# Indicate the beginning of building
+print '{:#^80}'.format(' SCONS BUILD ')
+
 # Import python modules
-from itertools import repeat
+from os import path
 
-# Import blender modules
-import bpy
+# Config variables
+gcc        = 'gcc'
+clang      = 'clang'
+input_dir  = 'src'
+output_dir = 'build'
+target     = 'linmath'
+source     = ['linmath.c']
 
-scenes = bpy.data.scenes
-meshes = bpy.data.meshes
+# C Compiler
+CC = gcc
 
-## Remove all objects from all scenes
-## and remove all scenes as well
-#for scene in scenes:
-#    for object in scene.objects:
-#        meshes.remove(object)
-#    scenes.remove(scene)
-## check: http://blenderscripting.blogspot.hu/2012/03/deleting-objects-from-scene.html
+# C Compiler Flags
+CCFLAGS = ['v',
+           'g',
+           'O3',
+           'Wall',
+           'Wextra',
+           'pedantic',
+           'std=c11',]
 
-# Useful demo:
-# http://wiki.blender.org/index.php/Dev:2.5/Py/Scripts/Cookbook/Code_snippets/Armatures
+# GCC Specific Compiler Flags
+GCCFLAGS = ['fdiagnostics-color=always']
 
-# Create a new scene
-bpy.ops.scene.new(type='EMPTY')
-scene = scenes[-1]
-print(scene)
+# CLANG Specific Compiler Flags
+CLANGFLAGS = ['fcolor-diagnostics',
+              'fmacro-backtrace-limit=0']
 
+# Add compiler specific flags
+CCFLAGS.extend(GCCFLAGS if CC == gcc else CLANGFLAGS if CC == clang else [])
 
-#------------------------------------------------------------------------------#
-def _add_constraint_to_bones(armature_name, constraint_type, target_names, details):
-    for bone, target_name in zip(bpy.data.objects[armature_name].pose.bones, target_names):
-        constraint = bone.constraints.new(constraint_type)
-        constraint.target = bpy.data.objects[target_name]
-        for key, value in details.items():
-            setattr(constraint, key, value)
+# C Pre-Processor Path (Include)
+CPPPATH = ['.', '/usr/include/python3.4m']
 
+# Create environment
+environment = Environment(CC=CC,
+                          CCFLAGS=['-' + flag for flag in CCFLAGS],
+                          CPPPATH=CPPPATH)
 
-#------------------------------------------------------------------------------#
-# Convenient wrapper
-def add_rotation_constraint_to_bones(armature_name, target_names, **details):
-    _add_constraint_to_bones(armature_name, 'COPY_ROTATION', target_names, details)
+# Specify output directory
+environment.VariantDir(variant_dir=output_dir,
+                       src_dir=input_dir)
 
-
-#------------------------------------------------------------------------------#
-# Convenient wrapper
-def add_location_constraint_to_bones(armature_name, target_names, **details):
-    _add_constraint_to_bones(armature_name, 'COPY_LOCATION', target_names, details)
-
-
-#------------------------------------------------------------------------------#
-# Calling 'adder' function
-add_rotation_constraint_to_bones('Prototype_Surface_all',
-                                 repeat('Prototype_VertexSpheres'),
-                                 use_x=False,
-                                 use_y=False)
+# Create shared library
+environment.SharedLibrary(target=target,
+                          source=[path.join(output_dir, file) for file in source],
+                          SHLIBPREFIX='')

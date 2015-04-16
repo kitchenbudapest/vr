@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.2.344 (20150414)                        ##
+##                       Version: 0.1.2.381 (20150416)                        ##
 ##                                 File: TODO                                 ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -27,7 +27,7 @@
 ##                                                                            ##
 ######################################################################## INFO ##
 
-#----------------------------- 8 POSTS IN 4 FILES -----------------------------#
+#---------------------------- 11 POSTS IN 5 FILES -----------------------------#
 TODO:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 1
@@ -45,6 +45,57 @@ TODO:
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 3
+  - file: app.py
+    line: 60
+    note: |
+          make build-script work :)
+          Import cutils modules => versioning
+          import build
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 4
+  - file: app.py
+    line: 125
+    note: |
+          fake casted shadow with negative lamp:
+          https://www.youtube.com/watch?v=iJUlqwKEdVQ
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 5
+  - file: app.py
+    line: 170
+    note: |
+          positioner(*finger.tip_position) => leaking memory and never returns
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 6
+  - file: app.py
+    line: 177
+    note: |
+          In the following order should things executed:
+              1) both hands => it can block a single hand
+              2) one hand   => it can block a single finger
+              3) one finger
+          Try to make the access of data and the execution of callbacks to
+          a single (optimised) loop if possible
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 7
+  - file: pylinmath/linmath/linmath.h
+    line: 383
+    note: |
+          The negation of of can be spared by swapping the order of
+          *       operands in the following cross products in the right way. 
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 8
+  - file: pylinmath/linmath/linmath.h
+    line: 511
+    note: |
+          Take care of non-orthogonal case. 
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 9
   - file: main.py
     line: 71
     note: |
@@ -55,42 +106,18 @@ TODO:
           - thumb + pinky  => deselect all
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 4
+  # 10
   - file: main.py
-    line: 117
+    line: 132
     note: |
           while pinching, make other fingers hidden
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 5
+  # 11
   - file: main.py
-    line: 147
+    line: 162
     note: |
           calculate the midpoint between index and thumb
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 6
-  - file: app.py
-    line: 60
-    note: |
-          make build-script work :)
-          Import cutils modules => versioning
-          import build
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 7
-  - file: app.py
-    line: 125
-    note: |
-          fake casted shadow with negative lamp:
-          https://www.youtube.com/watch?v=iJUlqwKEdVQ
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 8
-  - file: app.py
-    line: 170
-    note: |
-          positioner(*finger.tip_position) => leaking memory and never returns
 
 
 
@@ -115,7 +142,7 @@ HACK:
 
 
 
-#----------------------------- 1 POSTS IN 1 FILES -----------------------------#
+#----------------------------- 2 POSTS IN 2 FILES -----------------------------#
 NOTE:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 1
@@ -123,5 +150,24 @@ NOTE:
     line: 79
     note: |
           local->global: http://blenderartists.org/forum/archive/index.php/t-180690.html
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 2
+  - file: pylinmath/linmath/linmath.h
+    line: 353
+    note: |
+          Degrees are an unhandy unit to work with.
+          * linmath.h uses radians for everything! 
+
+
+
+#----------------------------- 1 POSTS IN 1 FILES -----------------------------#
+XXX:
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 1
+  - file: pylinmath/linmath/linmath.h
+    line: 510
+    note: |
+          The way this is written only works for othogonal matrices. 
 
 
