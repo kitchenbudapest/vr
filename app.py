@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.2.351 (20150415)                        ##
+##                       Version: 0.1.2.477 (20150419)                        ##
 ##                                File: app.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -152,9 +152,9 @@ class Application:
         leap_frame = self._leap_controller.frame()
 
         # Set camera position and orientation
-        self._camera.worldPosition = rift_frame.position
-        self._camera.worldOrientation = \
-            RIFT_ORIENTATION_SHIFT*Quaternion(rift_frame.orientation)
+        #self._camera.worldPosition = rift_frame.position
+        #self._camera.worldOrientation = \
+        #    RIFT_ORIENTATION_SHIFT*Quaternion(rift_frame.orientation)
 
         # If leap was unable to get a proper frame
         if not leap_frame.is_valid:
@@ -169,9 +169,7 @@ class Application:
             for finger in leap_hand.fingers:
                 # TODO: positioner(*finger.tip_position) => leaking memory and never returns
                 hand.finger_by_leap(finger.type()).position = positioner(finger.tip_position)
-            #
             hand.execute_all_callbacks()
-        #
         self._hands.execute_all_callbacks()
 
         # TODO: In the following order should things executed:

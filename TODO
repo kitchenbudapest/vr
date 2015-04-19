@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.2.381 (20150416)                        ##
+##                       Version: 0.1.2.480 (20150419)                        ##
 ##                                 File: TODO                                 ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -38,13 +38,53 @@ TODO:
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 2
+  - file: pylinmath/linmath/linmath.h
+    line: 383
+    note: |
+          The negation of of can be spared by swapping the order of
+          *       operands in the following cross products in the right way. 
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 3
+  - file: pylinmath/linmath/linmath.h
+    line: 511
+    note: |
+          Take care of non-orthogonal case. 
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 4
   - file: pyvr/src/oculus.c
     line: 310
     note: |
           make index optional !!! 
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 3
+  # 5
+  - file: main.py
+    line: 91
+    note: |
+          pinches:
+          - thumb + index  => move selected
+          - thumb + middle => select
+          - thumb + ring   => deselect
+          - thumb + pinky  => deselect all
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 6
+  - file: main.py
+    line: 157
+    note: |
+          while pinching, make other fingers hidden
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 7
+  - file: main.py
+    line: 187
+    note: |
+          calculate the midpoint between index and thumb
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 8
   - file: app.py
     line: 60
     note: |
@@ -53,7 +93,7 @@ TODO:
           import build
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 4
+  # 9
   - file: app.py
     line: 125
     note: |
@@ -61,14 +101,14 @@ TODO:
           https://www.youtube.com/watch?v=iJUlqwKEdVQ
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 5
+  # 10
   - file: app.py
     line: 170
     note: |
           positioner(*finger.tip_position) => leaking memory and never returns
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 6
+  # 11
   - file: app.py
     line: 177
     note: |
@@ -79,45 +119,35 @@ TODO:
           Try to make the access of data and the execution of callbacks to
           a single (optimised) loop if possible
 
+
+
+#----------------------------- 2 POSTS IN 2 FILES -----------------------------#
+BUG:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 7
-  - file: pylinmath/linmath/linmath.h
-    line: 383
+  # 1
+  - file: pylinmath/build/linmath.c
+    line: 457
     note: |
-          The negation of of can be spared by swapping the order of
-          *       operands in the following cross products in the right way. 
+          Python/C API has this bug, if one wants to define
+          a static method which also accepts keyword arguments
+          one should use the:
+          `METH_VARARGS | METH_KEYWORDS | METH_STATIC`
+          ml_flags, otherwise, it will raise the following:
+          Bad call flags in PyCFunction_Call.
+          METH_OLDARGS is no longer supported! 
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 8
-  - file: pylinmath/linmath/linmath.h
-    line: 511
+  # 2
+  - file: pylinmath/src/linmath.c
+    line: 457
     note: |
-          Take care of non-orthogonal case. 
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 9
-  - file: main.py
-    line: 71
-    note: |
-          pinches:
-          - thumb + index  => move selected
-          - thumb + middle => select
-          - thumb + ring   => deselect
-          - thumb + pinky  => deselect all
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 10
-  - file: main.py
-    line: 132
-    note: |
-          while pinching, make other fingers hidden
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 11
-  - file: main.py
-    line: 162
-    note: |
-          calculate the midpoint between index and thumb
+          Python/C API has this bug, if one wants to define
+          a static method which also accepts keyword arguments
+          one should use the:
+          `METH_VARARGS | METH_KEYWORDS | METH_STATIC`
+          ml_flags, otherwise, it will raise the following:
+          Bad call flags in PyCFunction_Call.
+          METH_OLDARGS is no longer supported! 
 
 
 
@@ -146,18 +176,18 @@ HACK:
 NOTE:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 1
-  - file: app.py
-    line: 79
-    note: |
-          local->global: http://blenderartists.org/forum/archive/index.php/t-180690.html
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 2
   - file: pylinmath/linmath/linmath.h
     line: 353
     note: |
           Degrees are an unhandy unit to work with.
           * linmath.h uses radians for everything! 
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 2
+  - file: app.py
+    line: 79
+    note: |
+          local->global: http://blenderartists.org/forum/archive/index.php/t-180690.html
 
 
 

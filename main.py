@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.2.357 (20150416)                        ##
+##                       Version: 0.1.2.474 (20150419)                        ##
 ##                               File: main.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -29,6 +29,12 @@
 
 # Import python modules
 from math import sqrt, radians
+
+# Import blender modules
+from mathutils import Matrix
+
+# Import linmath modules
+from linmath import Vec3, Mat4x4
 
 # Import user modules
 from app import Application, MOUNTED_ON_DESK, MOUNTED_ON_HEAD
@@ -60,6 +66,20 @@ def distance(position1, position2):
                 pow(position2[2] - position1[2], 2))
 
 
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+def rotation_matrix_from_vectors(direction, target_direction):
+    v = target_direction.cross_product(direction)
+    skew = Mat4x4(( 0.0, -v.z,  v.y,  0.0),
+                  ( v.z,  0.0, -v.x,  0.0),
+                  (-v.y,  v.x,  0.0,  0.0),
+                  ( 0.0,  0.0,  0.0,  0.0))
+    try:
+        return (Mat4x4.identity() + skew +
+                (skew*skew)*((1 - direction*target_direction)/v.length**2))
+    except ZeroDivisionError:
+        return Mat4x4.identity()
+
+
 
 #------------------------------------------------------------------------------#
 class KibuVR(Application):
@@ -74,7 +94,7 @@ class KibuVR(Application):
         #       - thumb + ring   => deselect
         #       - thumb + pinky  => deselect all
 
-        self._prev_orientation_line = None
+        self._prev_grabbed_line = None
 
         # Set callback-states which will be used
         # duyring the execution of the callbacks
@@ -94,29 +114,34 @@ class KibuVR(Application):
         left    = states['left_hand']
         right   = states['right_hand']
         grabbed = False
-
         # If both hands are pinching with thumb and middle
         if (distance(left.thumb.position,
                      left.middle.position) < PINCH_FINGERS_DISTANCE and
             distance(right.thumb.position,
                      right.middle.position) < PINCH_FINGERS_DISTANCE):
-                grabbed = True
+
                 left.thumb.color  = left.middle.color  = \
                 right.thumb.color = right.middle.color = COLOR_ROTATE_PINCH_OKAY
 
-                # If previous orientation line has coordinates
-                try:
-                    prev_left_position, prev_right_position = self._prev_orientation_line
+                lpos = left.thumb.position
+                rpos = right.thumb.position
+                curr_grabbed_line = Vec3.from_line(lpos[0], lpos[1], lpos[2],
+                                                   rpos[0], rpos[1], rpos[2]).normalize()
 
+                # If previous orientation line has a vector
+                if self._prev_grabbed_line:
+                    grabbed = True
+                    rotation = rotation_matrix_from_vectors(self._prev_grabbed_line,
+                                                            curr_grabbed_line)
 
-                    self.vertex_origo.applyRotation((0, 0, radians(2)))
-
-
+                    rotation = Matrix(tuple(rotation)).to_euler()
+                    self.vertex_origo.applyRotation((-rotation[0],
+                                                     -rotation[1],
+                                                     -rotation[2]))
                     self.surface.update()
-                # If this was the first grab
-                except TypeError:
-                    pass
-                self._prev_orientation_line = left.thumb.position, right.thumb.position
+
+                # Store current line as previous one for the next cycle
+                self._prev_grabbed_line = curr_grabbed_line
         # If only one or none of the hands are pinching with thumb and middle
         else:
             left.middle.color = right.middle.color = COLOR_ROTATE_PINCH_BASE
