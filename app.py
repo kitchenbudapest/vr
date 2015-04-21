@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.2.477 (20150419)                        ##
+##                       Version: 0.1.2.481 (20150420)                        ##
 ##                                File: app.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -165,7 +165,7 @@ class Application:
         positioner = self._positioner
         for leap_hand in leap_frame.hands:
             hand = selector(leap_hand.is_right)
-            hand.set_states(hand=hand)
+            hand.set_states(hand=hand, leap_hand=leap_hand)
             for finger in leap_hand.fingers:
                 # TODO: positioner(*finger.tip_position) => leaking memory and never returns
                 hand.finger_by_leap(finger.type()).position = positioner(finger.tip_position)

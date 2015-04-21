@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.2.480 (20150419)                        ##
+##                       Version: 0.1.3.500 (20150421)                        ##
 ##                                 File: TODO                                 ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -53,15 +53,8 @@ TODO:
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 4
-  - file: pyvr/src/oculus.c
-    line: 310
-    note: |
-          make index optional !!! 
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 5
   - file: main.py
-    line: 91
+    line: 93
     note: |
           pinches:
           - thumb + index  => move selected
@@ -70,21 +63,21 @@ TODO:
           - thumb + pinky  => deselect all
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 6
+  # 5
   - file: main.py
-    line: 157
+    line: 187
     note: |
           while pinching, make other fingers hidden
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 7
+  # 6
   - file: main.py
-    line: 187
+    line: 217
     note: |
           calculate the midpoint between index and thumb
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 8
+  # 7
   - file: app.py
     line: 60
     note: |
@@ -93,7 +86,7 @@ TODO:
           import build
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 9
+  # 8
   - file: app.py
     line: 125
     note: |
@@ -101,16 +94,16 @@ TODO:
           https://www.youtube.com/watch?v=iJUlqwKEdVQ
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 10
+  # 9
   - file: app.py
     line: 170
     note: |
           positioner(*finger.tip_position) => leaking memory and never returns
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 11
+  # 10
   - file: app.py
-    line: 177
+    line: 175
     note: |
           In the following order should things executed:
               1) both hands => it can block a single hand
@@ -118,6 +111,13 @@ TODO:
               3) one finger
           Try to make the access of data and the execution of callbacks to
           a single (optimised) loop if possible
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 11
+  - file: pyvr/src/oculus.c
+    line: 310
+    note: |
+          make index optional !!! 
 
 
 

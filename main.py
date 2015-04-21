@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.2.474 (20150419)                        ##
+##                       Version: 0.1.2.481 (20150420)                        ##
 ##                               File: main.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -28,6 +28,7 @@
 ######################################################################## INFO ##
 
 # Import python modules
+from itertools import repeat
 from math import sqrt, radians
 
 # Import blender modules
@@ -53,6 +54,7 @@ from const import (COLOR_ROTATE_PINCH_BASE,
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
 # Module level constants
+GRAB_STRENGTH                 = 0.98
 PINCH_FINGERS_DISTANCE        = 2
 PINCH_VERTEX_FINGERS_DISTANCE = 1
 
@@ -108,25 +110,45 @@ class KibuVR(Application):
         self.hands.right.append_callback('pinch', self.on_pinch)
         self.hands.left.append_callback('pinch', self.on_pinch)
 
+        self.hands.right.append_callback('grabbing', self.on_grabbing)
+        self.hands.left.append_callback('grabbing', self.on_grabbing)
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def on_grabbing(self, states):
+        states['hand'].grab_strength = states['leap_hand'].grab_strength
+
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def on_grab(self, states):
         left    = states['left_hand']
         right   = states['right_hand']
         grabbed = False
-        # If both hands are pinching with thumb and middle
-        if (distance(left.thumb.position,
-                     left.middle.position) < PINCH_FINGERS_DISTANCE and
-            distance(right.thumb.position,
-                     right.middle.position) < PINCH_FINGERS_DISTANCE):
 
-                left.thumb.color  = left.middle.color  = \
-                right.thumb.color = right.middle.color = COLOR_ROTATE_PINCH_OKAY
+        try:
+            left_grab = left.grab_strength
+            right_grab = right.grab_strength
+        except AttributeError:
+            return
+
+        # If both hands are pinching with thumb and middle
+        #if (distance(left.thumb.position,
+        #             left.middle.position) < PINCH_FINGERS_DISTANCE and
+        #    distance(right.thumb.position,
+        #             right.middle.position) < PINCH_FINGERS_DISTANCE):
+        if (left_grab  >= GRAB_STRENGTH and
+            right_grab >= GRAB_STRENGTH):
+
+                left.hide(all_except=('thumb'))
+                right.hide(all_except=('thumb'))
+                left.thumb.color = right.thumb.color = COLOR_ROTATE_PINCH_OKAY
 
                 lpos = left.thumb.position
                 rpos = right.thumb.position
                 curr_grabbed_line = Vec3.from_line(lpos[0], lpos[1], lpos[2],
-                                                   rpos[0], rpos[1], rpos[2]).normalize()
+                                                   rpos[0], rpos[1], rpos[2])
+                curr_grabbed_line_length = curr_grabbed_line.length
+                curr_grabbed_line = curr_grabbed_line.normalize()
 
                 # If previous orientation line has a vector
                 if self._prev_grabbed_line:
@@ -138,14 +160,22 @@ class KibuVR(Application):
                     self.vertex_origo.applyRotation((-rotation[0],
                                                      -rotation[1],
                                                      -rotation[2]))
+                    try:
+                        scale = 1/(self._prev_grabbed_line_length/curr_grabbed_line_length)
+                        self.vertex_origo.worldScale = \
+                            [old * new for old, new in zip(self.vertex_origo.worldScale, repeat(scale))]
+                    except ZeroDivisionError:
+                        pass
+
                     self.surface.update()
 
                 # Store current line as previous one for the next cycle
                 self._prev_grabbed_line = curr_grabbed_line
+                self._prev_grabbed_line_length = curr_grabbed_line_length
         # If only one or none of the hands are pinching with thumb and middle
         else:
-            left.middle.color = right.middle.color = COLOR_ROTATE_PINCH_BASE
-            self._prev_orientation_line = None
+            left.color = right.color = COLOR_ROTATE_PINCH_BASE
+            self._prev_grabbed_line = None
 
         # Set hand-level callback state
         left.set_states(grabbed=grabbed)

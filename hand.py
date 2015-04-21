@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.2.326 (20150414)                        ##
+##                       Version: 0.1.2.481 (20150420)                        ##
 ##                               File: hand.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -102,6 +102,18 @@ class Hand(CallbackManager):
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    @property
+    def color(self):
+        return self._color
+
+    @color.setter
+    def color(self, value):
+        for finger in self._fingers.values():
+            finger.color = value
+        self._color = value
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def __init__(self, finger_creator, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -121,6 +133,27 @@ class Hand(CallbackManager):
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def finger_by_leap(self, leap_type):
         return self._fingers[leap_type]
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def hide(self, *fingers, all_except=[]):
+
+
+        for finger in fingers:
+            self._fingers[finger].visible = False
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def hide_all(self, *exceptions):
+        for name, finger in self._fingers.items():
+            if name not in exceptions:
+                finger.visible = True
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def show(self, *fingers, all_except=[]):
+        for finger in fingers:
+            self._fingers[finger].visible = True
+
 
 
 
