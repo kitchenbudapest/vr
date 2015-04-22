@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.3.500 (20150421)                        ##
+##                       Version: 0.1.3.523 (20150422)                        ##
 ##                                 File: TODO                                 ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -27,7 +27,7 @@
 ##                                                                            ##
 ######################################################################## INFO ##
 
-#---------------------------- 11 POSTS IN 5 FILES -----------------------------#
+#---------------------------- 12 POSTS IN 6 FILES -----------------------------#
 TODO:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 1
@@ -118,6 +118,13 @@ TODO:
     line: 310
     note: |
           make index optional !!! 
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 12
+  - file: generator.py
+    line: 159
+    note: |
+          it is very likely that the vertices list is not needed!
 
 
 
