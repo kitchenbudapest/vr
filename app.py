@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.2.481 (20150420)                        ##
+##                       Version: 0.1.4.533 (20150423)                        ##
 ##                                File: app.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -152,9 +152,9 @@ class Application:
         leap_frame = self._leap_controller.frame()
 
         # Set camera position and orientation
-        #self._camera.worldPosition = rift_frame.position
-        #self._camera.worldOrientation = \
-        #    RIFT_ORIENTATION_SHIFT*Quaternion(rift_frame.orientation)
+        self._camera.worldPosition = rift_frame.position
+        self._camera.worldOrientation = \
+            RIFT_ORIENTATION_SHIFT*Quaternion(rift_frame.orientation)
 
         # If leap was unable to get a proper frame
         if not leap_frame.is_valid:

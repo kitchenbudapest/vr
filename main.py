@@ -55,7 +55,7 @@ from const import (COLOR_ROTATE_PINCH_BASE,
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
 # Module level constants
 GRAB_STRENGTH                 = 0.98
-PINCH_FINGERS_DISTANCE        = 2
+PINCH_FINGERS_DISTANCE        = 3
 PINCH_VERTEX_FINGERS_DISTANCE = 1
 
 

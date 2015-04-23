@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.1.290 (20150413)                        ##
+##                       Version: 0.1.4.533 (20150423)                        ##
 ##                               File: const.py                               ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -29,15 +29,21 @@
 
 # Import python modules
 from math import radians
+from configparser import ConfigParser
 
 # Import blender modules
 from mathutils import Quaternion
 
+# Read configuration
+config = ConfigParser()
+with open('config.ini', encoding='utf-8') as file:
+    config.read_file(file)
+
 # Blender object names
-OBJ_PROTOTYPE_FINGER     = 'Prototype_Finger'
-OBJ_PROTOTYPE_SURFACE    = 'Prototype_Surface_all'
-OBJ_PROTOTYPE_VERTEX_ALL = 'Prototype_VertexSpheres'
-OBJ_GLOBAL               = 'Origo'
+OBJ_PROTOTYPE_FINGER     = config['Names']['finger_object']
+OBJ_PROTOTYPE_SURFACE    = config['Names']['armature_object']
+OBJ_PROTOTYPE_VERTEX_ALL = config['Names']['armature_control']
+OBJ_GLOBAL               = config['Names']['logic']
 
 # Colors
 COLOR_GEOMETRY_BASE      = 0.000, 0.448, 0.205, 1.000

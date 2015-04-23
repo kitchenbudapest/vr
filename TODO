@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.3.523 (20150422)                        ##
+##                       Version: 0.1.4.536 (20150423)                        ##
 ##                                 File: TODO                                 ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -27,7 +27,7 @@
 ##                                                                            ##
 ######################################################################## INFO ##
 
-#---------------------------- 12 POSTS IN 6 FILES -----------------------------#
+#---------------------------- 13 POSTS IN 6 FILES -----------------------------#
 TODO:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 1
@@ -78,6 +78,27 @@ TODO:
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 7
+  - file: pyvr/src/oculus.c
+    line: 310
+    note: |
+          make index optional !!! 
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 8
+  - file: generator.py
+    line: 176
+    note: |
+          figure out how to set values, when falloff_type='CUSTOM_CURVE'
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 9
+  - file: generator.py
+    line: 232
+    note: |
+          it is very likely that the vertices list is not needed!
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 10
   - file: app.py
     line: 60
     note: |
@@ -86,7 +107,7 @@ TODO:
           import build
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 8
+  # 11
   - file: app.py
     line: 125
     note: |
@@ -94,14 +115,14 @@ TODO:
           https://www.youtube.com/watch?v=iJUlqwKEdVQ
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 9
+  # 12
   - file: app.py
     line: 170
     note: |
           positioner(*finger.tip_position) => leaking memory and never returns
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 10
+  # 13
   - file: app.py
     line: 175
     note: |
@@ -111,20 +132,6 @@ TODO:
               3) one finger
           Try to make the access of data and the execution of callbacks to
           a single (optimised) loop if possible
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 11
-  - file: pyvr/src/oculus.c
-    line: 310
-    note: |
-          make index optional !!! 
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 12
-  - file: generator.py
-    line: 159
-    note: |
-          it is very likely that the vertices list is not needed!
 
 
 
