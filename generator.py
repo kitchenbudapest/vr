@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.4.533 (20150423)                        ##
+##                       Version: 0.1.4.545 (20150424)                        ##
 ##                             File: generator.py                             ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -103,6 +103,8 @@ VR_MATERIAL_WIRE        = config['Names']['material_wire']
 VR_MATERIAL_DOT         = config['Names']['material_dot']
 VR_FINGER_OBJECT        = config['Names']['finger_object']
 VR_FINGER_MESH          = config['Names']['finger_mesh']
+VR_DISTORTION_SHADER    = config['Scripts']['distortion_shader']
+VR_GAME_LOGIC           = config['Scripts']['game_logic']
 
 
 #------------------------------------------------------------------------------#
@@ -346,22 +348,39 @@ fng_material.game_settings.physics   = False
 fng_material.use_cast_shadows        = True
 fng_material.use_cast_buffer_shadows = True
 fng_material.use_object_color        = True
-
 fng_mesh.materials.append(fng_material)
 
+# Load text files
+bpy.data.texts.load(VR_DISTORTION_SHADER)
 
-## Make logic object active
-#bpy.context.scene.objects.active = log_object
+# Make logic object active and selected
+bpy.context.scene.objects.active = log_object
+log_object.select = True
 
-## Set up game properties
-#for property_name, property_value in ((VAR_SCREEN_WIDTH, int(VR_RESOLUTION_X/2)),
-#                                      (VAR_SCREEN_HEIGHT, VR_RESOLUTION_Y)):
-#    bpy.ops.object.game_property_new(name=property_name)
-#    game_property       = log_object.game_property_new(name=property_name)
-#    # TODO: it would be better to change this to INT => FLOAT is not required
-#    game_property.type  = 'FLOAT'
-#    game_property.value = property_value
+# Add game logic parts, and set their values
+bpy.ops.logic.sensor_add(type='ALWAYS')
+always_sensor = log_object.game.sensors[-1]
+always_sensor.use_pulse_true_level = True
 
-# Add sensors0
+bpy.ops.logic.controller_add(type='LOGIC_AND')
+and_controller = log_object.game.controllers[-1]
+bpy.ops.logic.controller_add(type='PYTHON')
+python_controller = log_object.game.controllers[-1]
+python_controller.mode = 'MODULE'
+python_controller.module = VR_GAME_LOGIC
 
+bpy.ops.logic.actuator_add(type='FILTER_2D')
+filter_actuator = log_object.game.actuators[-1]
+filter_actuator.mode = 'CUSTOMFILTER'
+filter_actuator.glsl_shader = bpy.data.texts[VR_DISTORTION_SHADER]
 
+# Connect logic object
+always_sensor.link(and_controller)
+always_sensor.link(python_controller)
+and_controller.link(actuator=filter_actuator)
+
+# Add properties
+bpy.ops.object.game_property_new(type='FLOAT', name=VAR_SCREEN_WIDTH)
+bpy.ops.object.game_property_new(type='FLOAT', name=VAR_SCREEN_HEIGHT)
+log_object.game.properties[VAR_SCREEN_WIDTH].value  = VR_RESOLUTION_X
+log_object.game.properties[VAR_SCREEN_HEIGHT].value = VR_RESOLUTION_Y
