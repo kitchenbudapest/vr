@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.4.533 (20150423)                        ##
+##                       Version: 0.1.5.590 (20150429)                        ##
 ##                                File: app.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -42,8 +42,9 @@ import bge
 from mathutils import Vector, Matrix, Euler, Quaternion
 
 # Import user modules
-from hand import Hands
-from surface import Surface
+from hand     import Hands
+from surface  import Surface
+from callback import CallbackManager
 
 # Import global level constants
 from const import (OBJ_PROTOTYPE_FINGER,
@@ -55,7 +56,24 @@ from const import (OBJ_PROTOTYPE_FINGER,
                    RIFT_MULTIPLIER,
                    RIFT_POSITION_SHIFT_Y,
                    RIFT_POSITION_SHIFT_Z,
-                   RIFT_ORIENTATION_SHIFT)
+                   RIFT_ORIENTATION_SHIFT,
+                   COMM_IS_PAIRED,
+                   COMM_DEVICE_NAME,
+                   COMM_THIS_HOST,
+                   COMM_THIS_PORT,
+                   COMM_OTHER_HOST,
+                   COMM_OTHER_PORT,
+                   COMM_IS_MASTER)
+
+# Import conditional user modules
+if COMM_IS_PAIRED:
+    if COMM_IS_MASTER:
+        from communication import sizeof_pow2, Server as Connection
+    else:
+        from communication import sizeof_pow2, Client as Connection
+    # Conditional module level constant
+    BUFFER_SIZE = sizeof_pow2([(int(), float(), float(), float()),
+                               (int(), float(), float(), float())])
 
 # TODO: make build-script work :)
 # Import cutils modules => versioning
@@ -74,7 +92,7 @@ JUST_ACTIVATED  = bge.logic.KX_INPUT_JUST_ACTIVATED
 
 
 #------------------------------------------------------------------------------#
-class Application:
+class Application(CallbackManager):
 
     # NOTE: local->global: http://blenderartists.org/forum/archive/index.php/t-180690.html
 
@@ -95,7 +113,19 @@ class Application:
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def __init__(self, mounted_on_desk):
+    def __init__(self, mounted_on_desk, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        try:
+            # Create connection
+            self._connection = Connection(this_host=COMM_THIS_HOST,
+                                          this_port=COMM_THIS_PORT,
+                                          buffer_size=BUFFER_SIZE,
+                                          device=COMM_DEVICE_NAME)
+            self._connection.connect(other_host=COMM_OTHER_HOST,
+                                     other_port=COMM_OTHER_PORT)
+        # If connection is not imported
+        except NameError:
+            pass
         # Create a new instance of the leap-motion controller
         self._leap_controller = Leap.Controller()
         # Create a new instance of the oculus-rift controller
@@ -163,6 +193,7 @@ class Application:
         # If leap was able to get the frame set finger positions
         selector   = self._selector
         positioner = self._positioner
+        self.execute_all_callbacks()
         for leap_hand in leap_frame.hands:
             hand = selector(leap_hand.is_right)
             hand.set_states(hand=hand, leap_hand=leap_hand)

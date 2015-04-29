@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.4.547 (20150424)                        ##
+##                       Version: 0.1.5.603 (20150429)                        ##
 ##                                 File: TODO                                 ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -27,7 +27,7 @@
 ##                                                                            ##
 ######################################################################## INFO ##
 
-#---------------------------- 13 POSTS IN 6 FILES -----------------------------#
+#---------------------------- 14 POSTS IN 7 FILES -----------------------------#
 TODO:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 1
@@ -53,32 +53,60 @@ TODO:
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 4
+  - file: generator.py
+    line: 179
+    note: |
+          figure out how to set values, when falloff_type='CUSTOM_CURVE'
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 5
+  - file: generator.py
+    line: 235
+    note: |
+          it is very likely that the vertices list is not needed!
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 6
+  - file: pyvr/src/oculus.c
+    line: 310
+    note: |
+          make index optional !!! 
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 7
+  - file: communication.py
+    line: 49
+    note: |
+          instead of pickle use struct => https://docs.python.org/3.4/library/struct.html
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 8
   - file: app.py
-    line: 60
+    line: 78
     note: |
           make build-script work :)
           Import cutils modules => versioning
           import build
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 5
+  # 9
   - file: app.py
-    line: 125
+    line: 155
     note: |
           fake casted shadow with negative lamp:
           https://www.youtube.com/watch?v=iJUlqwKEdVQ
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 6
+  # 10
   - file: app.py
-    line: 170
+    line: 201
     note: |
           positioner(*finger.tip_position) => leaking memory and never returns
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 7
+  # 11
   - file: app.py
-    line: 175
+    line: 206
     note: |
           In the following order should things executed:
               1) both hands => it can block a single hand
@@ -88,9 +116,9 @@ TODO:
           a single (optimised) loop if possible
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 8
+  # 12
   - file: main.py
-    line: 93
+    line: 102
     note: |
           pinches:
           - thumb + index  => move selected
@@ -99,39 +127,18 @@ TODO:
           - thumb + pinky  => deselect all
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 9
+  # 13
   - file: main.py
-    line: 187
+    line: 235
     note: |
           while pinching, make other fingers hidden
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 10
+  # 14
   - file: main.py
-    line: 217
+    line: 268
     note: |
           calculate the midpoint between index and thumb
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 11
-  - file: pyvr/src/oculus.c
-    line: 310
-    note: |
-          make index optional !!! 
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 12
-  - file: generator.py
-    line: 179
-    note: |
-          figure out how to set values, when falloff_type='CUSTOM_CURVE'
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 13
-  - file: generator.py
-    line: 235
-    note: |
-          it is very likely that the vertices list is not needed!
 
 
 
@@ -170,7 +177,7 @@ HACK:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 1
   - file: app.py
-    line: 117
+    line: 147
     note: |
           Surface arguments should be protoype_creator methods, instead of
           actual objects, but right now, prototyping the surface object
@@ -180,7 +187,7 @@ HACK:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 2
   - file: app.py
-    line: 128
+    line: 158
     note: |
           yuck.. this is getting out of hands now :(:(:(
 
@@ -199,7 +206,7 @@ NOTE:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 2
   - file: app.py
-    line: 79
+    line: 97
     note: |
           local->global: http://blenderartists.org/forum/archive/index.php/t-180690.html
 

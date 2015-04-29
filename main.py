@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.2.481 (20150420)                        ##
+##                       Version: 0.1.5.599 (20150429)                        ##
 ##                               File: main.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -38,7 +38,8 @@ from mathutils import Matrix
 from linmath import Vec3, Mat4x4
 
 # Import user modules
-from app import Application, MOUNTED_ON_DESK, MOUNTED_ON_HEAD
+from surface import VertexLocked
+from app     import Application, MOUNTED_ON_DESK, MOUNTED_ON_HEAD
 
 # Import global level constants
 from const import (COLOR_ROTATE_PINCH_BASE,
@@ -48,14 +49,17 @@ from const import (COLOR_ROTATE_PINCH_BASE,
                    COLOR_GRAB_PINCH_OKAY,
                    COLOR_GEOMETRY_BASE,
                    COLOR_GEOMETRY_DARK,
-                   COLOR_GEOMETRY_LITE)
+                   COLOR_GEOMETRY_LITE,
+                   COLOR_LOCKED,
+                   COLOR_UNLOCKED,
+                   COMM_IS_PAIRED)
 
 
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
 # Module level constants
 GRAB_STRENGTH                 = 0.98
-PINCH_FINGERS_DISTANCE        = 3
+PINCH_FINGERS_DISTANCE        = 2
 PINCH_VERTEX_FINGERS_DISTANCE = 1
 
 
@@ -90,6 +94,11 @@ class KibuVR(Application):
     def __init__(self, *args, **kwargs):
         super().__init__(MOUNTED_ON_DESK, *args, **kwargs)
 
+        if COMM_IS_PAIRED:
+            self.set_states(this_left=None, this_right=None,
+                            other_left=None, other_right=None)
+            self.append_callback('comm', self.on_communication)
+
         # TODO: pinches:
         #       - thumb + index  => move selected
         #       - thumb + middle => select
@@ -101,9 +110,9 @@ class KibuVR(Application):
         # Set callback-states which will be used
         # duyring the execution of the callbacks
         self.hands.left.set_states(grabbed=False,
-                                   thumb_index_pinched_vertex=None)
+                                   selected_vertices=None)
         self.hands.right.set_states(grabbed=False,
-                                    thumb_index_pinched_vertex=None)
+                                    selected_vertices=None)
 
         # Set actual callbacks
         self.hands.append_callback('grab', self.on_grab)
@@ -112,6 +121,45 @@ class KibuVR(Application):
 
         self.hands.right.append_callback('grabbing', self.on_grabbing)
         self.hands.left.append_callback('grabbing', self.on_grabbing)
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def on_communication(self, states):
+        # Prepare and send data
+        data = []
+        for i, v in self.surface.selected():
+            data.append((i, v.worldPosition[0], v.worldPosition[1], v.worldPosition[2]))
+
+        #try:
+        #    i, v = self.hands.left.selected_vertices
+        #    d1 = i, v.worldPosition[0], v.worldPosition[1], v.worldPosition[2]
+        #except (TypeError, AttributeError):
+        #    d1 = None
+        #try:
+        #    i, v = self.hands.right.selected_vertices
+        #    d2 = i, v.worldPosition[0], v.worldPosition[1], v.worldPosition[2]
+        #except (TypeError, AttributeError):
+        #    d2 = None
+
+        # Receive data and act based on it
+        for vertex in self.surface.unlock_all():
+            vertex.color = COLOR_UNLOCKED
+        for i, x, y, z in self._connection.transfer(data):
+            self.surface[i].worldPosition = x, y, z
+            self.surface.lock(i).color = COLOR_LOCKED
+
+        #try:
+        #    i, x, y, z = d1
+        #    self.surface[i].worldPosition = x, y, z
+        #    self.surface.lock(i)
+        #except TypeError:
+        #    pass
+        #try:
+        #    i, x, y, z = d2
+        #    self.surface[i].worldPosition = x, y, z
+        #    self.surface,lock(i)
+        #except TypeError:
+        #    pass
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
@@ -163,7 +211,7 @@ class KibuVR(Application):
                     try:
                         scale = 1/(self._prev_grabbed_line_length/curr_grabbed_line_length)
                         self.vertex_origo.worldScale = \
-                            [old * new for old, new in zip(self.vertex_origo.worldScale, repeat(scale))]
+                            [old*new for old, new in zip(self.vertex_origo.worldScale, repeat(scale))]
                     except ZeroDivisionError:
                         pass
 
@@ -197,11 +245,10 @@ class KibuVR(Application):
 
             surface = self.surface
             try:
-                vertex = hand.thumb_index_pinched_vertex
-                vertex.worldPosition = hand.index.position
+                hand.selected_vertices[1].worldPosition = hand.index.position
                 surface.update()
                 return
-            except AttributeError:
+            except (TypeError, AttributeError):
                 pass
 
             hand.thumb.color = hand.index.color = COLOR_GRAB_PINCH_FAIL
@@ -213,21 +260,27 @@ class KibuVR(Application):
                              vertex.worldPosition) < PINCH_VERTEX_FINGERS_DISTANCE or
                     distance(hand.index.position,
                              vertex.worldPosition) < PINCH_VERTEX_FINGERS_DISTANCE):
+                        try:
+                            surface.select(i)
+                        except VertexLocked:
+                            return
                         # If so edit the vertex's position and stop iterating
                         # TODO: calculate the midpoint between index and thumb
                         hand.thumb.color = hand.index.color = COLOR_GRAB_PINCH_OKAY
                         vertex.color = COLOR_GEOMETRY_LITE
                         vertex.worldPosition = hand.index.position
-                        hand.thumb_index_pinched_vertex = vertex
+                        hand.selected_vertices = i, vertex
                         surface.update()
                         return
         # If there is no pinch or pinch was released
         else:
             try:
-                hand.thumb_index_pinched_vertex.color = COLOR_GEOMETRY_DARK
-            except AttributeError:
+                i, vertex = hand.selected_vertices
+                vertex.color = COLOR_GEOMETRY_DARK
+                surface.deselect(i)
+            except (TypeError, AttributeError):
                 pass
-            hand.thumb_index_pinched_vertex = None
+            hand.selected_vertices = None
             hand.thumb.color = hand.index.color = COLOR_GRAB_PINCH_BASE
 
 

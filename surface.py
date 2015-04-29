@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.0.271 (20150413)                        ##
+##                       Version: 0.1.5.594 (20150429)                        ##
 ##                              File: surface.py                              ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -28,6 +28,10 @@
 ######################################################################## INFO ##
 
 #------------------------------------------------------------------------------#
+class VertexLocked(Exception): pass
+
+
+#------------------------------------------------------------------------------#
 class Surface:
 
     MESH_INDEX     = 0
@@ -47,6 +51,8 @@ class Surface:
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def __init__(self, surface_creator, vertex_creator, base_color):
+        self._locked   = {}
+        self._selected = {}
         self._surface  = surface_creator#()
         self._vertices = vertex_creator#()
 
@@ -67,3 +73,53 @@ class Surface:
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def update(self):
         self._surface.update()
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def selected(self) -> 'tuples of index and KX_VertexProxy pair':
+        yield from self._selected.items()
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def select(self, index) -> 'KX_VertexProxy':
+        if index in self._locked:
+            raise VertexLocked
+        vertex = self._vertices.children[i]
+        self._selected[index] = vertex
+        return vertex
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def deselect(self, index) -> 'KX_VertexProxy':
+        return self._selected.pop(index, None)
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def deselect_all(self) -> 'tuple of KX_VertexProxies':
+        selected = tuple(self._selected.values())
+        self._selected = {}
+        return selected
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def locked(self) -> 'tuples of index and KX_VertexProxy pair':
+        yield from self._locked.items()
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def lock(self, index) -> 'KX_VertexProxy':
+        vertex = self._vertices.children[i]
+        self._locked[index] = vertex
+        return vertex
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def unlock(self, index) -> 'KX_VertexProxy':
+        return self._locked.pop(index, None)
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def unlock_all(self) -> 'tuple of KX_VertexProxies':
+        locked = tuple(self._locked.values())
+        self._locked = {}
+        return locked
