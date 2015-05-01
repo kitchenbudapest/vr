@@ -63,10 +63,11 @@ LeapMotion and Python 3 API
         $ sudo cp <path-to-downloads>/LeapDeveloperKit_<version-number>_linux/LeapSDK/include/LeapPython.so .
         $ sudo cp <path-to-downloads>/LeapDeveloperKit_<version-number>_linux/LeapSDK/lib/x64/libLeap.so .
 
-- *I don't know if this is necessary or not, but here I defined this in my environment:*
+- Add library path to the environment:
 
         $ nano ~/.bashrc
         $ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/Leap/
+        $ source ~/.bashrc
 
 - The following lines should be included into every python file which is using
   the `Leap` module:
@@ -84,7 +85,10 @@ LeapMotion and Python 3 API
 Oculus Rift and Python 3 API
 ----------------------------
 
-- Install SDK:
+- Download the SDK from [here](https://developer.oculus.com/downloads), at this
+  very moment, the latest version available is: `0.5.0.1-beta`
+
+- Navigate to the download folder and install the SDK:
 
         $ make
         $ sudo make install

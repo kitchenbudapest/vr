@@ -1,14 +1,14 @@
 ## INFO ########################################################################
 ##                                                                            ##
-##                                  kibu-vr                                   ##
+##                                  plastey                                   ##
 ##                                  =======                                   ##
 ##                                                                            ##
-##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.5.603 (20150429)                        ##
+##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
+##                       Version: 0.1.5.631 (20150501)                        ##
 ##                                 File: TODO                                 ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
-##                            <http://vr.kibu.hu>.                            ##
+##                         <http://plastey.kibu.hu>.                          ##
 ##              Copyright (C) 2015 Peter Varo, Kitchen Budapest               ##
 ##                                                                            ##
 ##  This program is free software: you can redistribute it and/or modify it   ##
@@ -67,20 +67,6 @@ TODO:
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 6
-  - file: pyvr/src/oculus.c
-    line: 310
-    note: |
-          make index optional !!! 
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 7
-  - file: communication.py
-    line: 49
-    note: |
-          instead of pickle use struct => https://docs.python.org/3.4/library/struct.html
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 8
   - file: app.py
     line: 78
     note: |
@@ -89,7 +75,7 @@ TODO:
           import build
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 9
+  # 7
   - file: app.py
     line: 155
     note: |
@@ -97,14 +83,14 @@ TODO:
           https://www.youtube.com/watch?v=iJUlqwKEdVQ
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 10
+  # 8
   - file: app.py
     line: 201
     note: |
           positioner(*finger.tip_position) => leaking memory and never returns
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 11
+  # 9
   - file: app.py
     line: 206
     note: |
@@ -116,7 +102,14 @@ TODO:
           a single (optimised) loop if possible
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 12
+  # 10
+  - file: communication.py
+    line: 40
+    note: |
+          instead of pickle use struct => https://docs.python.org/3.4/library/struct.html
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 11
   - file: main.py
     line: 102
     note: |
@@ -127,18 +120,25 @@ TODO:
           - thumb + pinky  => deselect all
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 13
+  # 12
   - file: main.py
     line: 235
     note: |
           while pinching, make other fingers hidden
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 14
+  # 13
   - file: main.py
     line: 268
     note: |
           calculate the midpoint between index and thumb
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 14
+  - file: pyvr/src/oculus.c
+    line: 310
+    note: |
+          make index optional !!! 
 
 
 

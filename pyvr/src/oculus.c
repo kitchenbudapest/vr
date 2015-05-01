@@ -1,14 +1,14 @@
 /* INFO ************************************************************************
 **                                                                            **
-**                                  kibu-vr                                   **
+**                                  plastey                                   **
 **                                  =======                                   **
 **                                                                            **
-**        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         **
-**                       Version: 0.1.0.270 (20150412)                        **
+**      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       **
+**                       Version: 0.1.5.629 (20150501)                        **
 **                          File: pyvr/src/oculus.c                           **
 **                                                                            **
 **               For more information about the project, visit                **
-**                            <http://vr.kibu.hu>.                            **
+**                         <http://plastey.kibu.hu>.                          **
 **              Copyright (C) 2015 Peter Varo, Kitchen Budapest               **
 **                                                                            **
 **  This program is free software: you can redistribute it and/or modify it   **
@@ -95,7 +95,7 @@
 
 /* Include Oculus' C API */
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-#include <OVR_CAPI.h> /*
+#include "OVR_CAPI.h" /*
     type  : ovrHmd
             ovrTrackingState
             ovrPosef

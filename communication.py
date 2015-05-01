@@ -1,14 +1,14 @@
 ## INFO ########################################################################
 ##                                                                            ##
-##                                  kibu-vr                                   ##
+##                                  plastey                                   ##
 ##                                  =======                                   ##
 ##                                                                            ##
-##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.5.586 (20150429)                        ##
+##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
+##                       Version: 0.1.5.617 (20150501)                        ##
 ##                           File: communication.py                           ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
-##                            <http://vr.kibu.hu>.                            ##
+##                         <http://plastey.kibu.hu>.                          ##
 ##              Copyright (C) 2015 Peter Varo, Kitchen Budapest               ##
 ##                                                                            ##
 ##  This program is free software: you can redistribute it and/or modify it   ##
@@ -30,21 +30,12 @@
 # Import python modules
 from itertools    import count
 from sys          import getsizeof
-from configparser import ConfigParser
-from subprocess   import call, check_output
 from pickle       import dumps, loads, HIGHEST_PROTOCOL
 from socket       import socket, AF_INET, SOCK_STREAM, SHUT_RDWR
-from errno        import (EISCONN,       # Transport endpoint is already connected
-                          EADDRNOTAVAIL) # Cannot assign requested address
+from errno        import EISCONN # Transport endpoint is already connected
 
-#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-# Module level constants
-SET_DEV     = 'sudo ip link set {DEVICE} up'
-ADD_DEV     = 'sudo ip address add {HOST}/24 dev {DEVICE}'
-AUTO_DEV    = next(n for n in check_output('ls /sys/class/net', shell=True).split()
-                     if n.startswith(b'en')).decode('utf-8')
-
-
+# Import blender modules
+import bge
 
 # TODO: instead of pickle use struct => https://docs.python.org/3.4/library/struct.html
 
@@ -64,18 +55,10 @@ class Socket:
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def __init__(self, this_host, this_port, device=None, buffer_size=1024):
-        device  = device or AUTO_DEV
         address = this_host, this_port
         self._buffer_size = buffer_size
-        call(SET_DEV.format(DEVICE=device), shell=True)
         self._socket = socket(AF_INET, SOCK_STREAM)
-        try:
-            self._socket.bind(address)
-        except OSError as exception:
-            if exception.errno != EADDRNOTAVAIL:
-                raise exception
-            call(ADD_DEV.format(HOST=this_host, DEVICE=device), shell=True)
-            self._socket.bind(address)
+        self._socket.bind(address)
         print('[ OKAY ] Socket created')
 
 

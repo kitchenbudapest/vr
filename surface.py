@@ -1,14 +1,14 @@
 ## INFO ########################################################################
 ##                                                                            ##
-##                                  kibu-vr                                   ##
+##                                  plastey                                   ##
 ##                                  =======                                   ##
 ##                                                                            ##
-##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.5.594 (20150429)                        ##
+##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
+##                       Version: 0.1.5.628 (20150501)                        ##
 ##                              File: surface.py                              ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
-##                            <http://vr.kibu.hu>.                            ##
+##                         <http://plastey.kibu.hu>.                          ##
 ##              Copyright (C) 2015 Peter Varo, Kitchen Budapest               ##
 ##                                                                            ##
 ##  This program is free software: you can redistribute it and/or modify it   ##
@@ -66,8 +66,8 @@ class Surface:
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def __getitem__(self, i) -> 'KX_VertexProxy':
-        return self._vertices.children[i]
+    def __getitem__(self, index) -> 'KX_VertexProxy':
+        return self._vertices.children[index]
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
@@ -84,7 +84,7 @@ class Surface:
     def select(self, index) -> 'KX_VertexProxy':
         if index in self._locked:
             raise VertexLocked
-        vertex = self._vertices.children[i]
+        vertex = self._vertices.children[index]
         self._selected[index] = vertex
         return vertex
 
@@ -108,7 +108,7 @@ class Surface:
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def lock(self, index) -> 'KX_VertexProxy':
-        vertex = self._vertices.children[i]
+        vertex = self._vertices.children[index]
         self._locked[index] = vertex
         return vertex
 

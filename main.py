@@ -1,14 +1,14 @@
 ## INFO ########################################################################
 ##                                                                            ##
-##                                  kibu-vr                                   ##
+##                                  plastey                                   ##
 ##                                  =======                                   ##
 ##                                                                            ##
-##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.5.599 (20150429)                        ##
+##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
+##                       Version: 0.1.5.627 (20150501)                        ##
 ##                               File: main.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
-##                            <http://vr.kibu.hu>.                            ##
+##                         <http://plastey.kibu.hu>.                          ##
 ##              Copyright (C) 2015 Peter Varo, Kitchen Budapest               ##
 ##                                                                            ##
 ##  This program is free software: you can redistribute it and/or modify it   ##
@@ -277,7 +277,7 @@ class KibuVR(Application):
             try:
                 i, vertex = hand.selected_vertices
                 vertex.color = COLOR_GEOMETRY_DARK
-                surface.deselect(i)
+                self.surface.deselect(i)
             except (TypeError, AttributeError):
                 pass
             hand.selected_vertices = None
