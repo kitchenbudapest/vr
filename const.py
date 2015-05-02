@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.1.5.641 (20150502)                        ##
+##                       Version: 0.1.6.672 (20150502)                        ##
 ##                               File: const.py                               ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -57,6 +57,8 @@ COMM_THIS_PORT           = int(config['Communication']['this_port'])
 COMM_OTHER_HOST          = config['Communication']['other_host']
 COMM_OTHER_PORT          = int(config['Communication']['other_port'])
 COMM_IS_MASTER           = bool(eval(config['Communication']['master']))
+COMM_RUNNING             =  0
+COMM_RESTART             = -1
 
 # Colors
 COLOR_GEOMETRY_BASE      = 0.000, 0.448, 0.205, 1.000

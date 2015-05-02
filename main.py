@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.1.5.646 (20150502)                        ##
+##                       Version: 0.1.6.672 (20150502)                        ##
 ##                               File: main.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -39,7 +39,10 @@ from linmath import Vec3, Mat4x4
 
 # Import user modules
 from surface import VertexLocked
-from app     import Application, MOUNTED_ON_DESK, MOUNTED_ON_HEAD
+from app     import (Application,
+                     RestartApplication,
+                     MOUNTED_ON_DESK,
+                     MOUNTED_ON_HEAD)
 
 # Import global level constants
 from const import (OBJ_DOT,
@@ -54,7 +57,8 @@ from const import (OBJ_DOT,
                    COLOR_LOCKED,
                    COLOR_UNLOCKED,
                    COMM_IS_PAIRED,
-                   COMM_IS_MASTER)
+                   COMM_IS_MASTER,
+                   COMM_RESTART)
 
 
 
@@ -76,7 +80,7 @@ def distance(position1, position2):
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
 def index_of_vertex(vertex_name):
-    return int(vertex_name.split()[-1])
+    return int(vertex_name.split('.')[-1])
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
 def name_of_vertex(vertex_index):
@@ -106,12 +110,12 @@ class KibuVR(Application):
         super().__init__(MOUNTED_ON_DESK, *args, **kwargs)
 
         if COMM_IS_PAIRED:
-            self.set_states(this_left=None, this_right=None,
-                            other_left=None, other_right=None)
             self.append_callback('comm', self.on_communication)
             if not COMM_IS_MASTER:
                 self.vertex_origo.applyRotation((0, 0, radians(180)))
                 self.surface.update()
+        else:
+            self.append_callback('local', self.on_local)
 
         # TODO: pinches:
         #       - thumb + index  => move selected
@@ -138,28 +142,43 @@ class KibuVR(Application):
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def on_local(self, states):
+        if states['restart'] == COMM_RESTART:
+            raise RestartApplication
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def on_communication(self, states):
-        surface = self.surface
-        # Prepare and send data
-        data = []
-        for vertex in surface.selected():
-            data.append((index_of_vertex(vertex.name),
-                         vertex.worldPosition[0],
-                         vertex.worldPosition[1],
-                         vertex.worldPosition[2]))
+        # If application detected a restart
+        if states['restart'] == COMM_RESTART:
+            self._connection.transfer(COMM_RESTART)
+            raise RestartApplication
+        else:
+            # Local reference
+            surface = self.surface
+            # Prepare and send data
+            data = []
+            for identifier, vertex in surface.selected():
+                vertex_position = vertex.localPosition
+                data.append((index_of_vertex(vertex.name),
+                             vertex_position[0],
+                             vertex_position[1],
+                             vertex_position[2]))
 
         # Receive data and act based on it
         for vertex in surface.unlock_all():
             vertex.color = COLOR_UNLOCKED
         try:
-            for i, x, y, z in self._connection.transfer(data):
+            received_data = self._connection.transfer(data)
+            for i, x, y, z in received_data:
                 vertex_name = name_of_vertex(i)
-                surface[vertex_name].worldPosition = x, y, z
+                surface[vertex_name].localPosition = x, y, z
                 surface.lock(vertex_name).color = COLOR_LOCKED
             surface.update()
-        # If 'NoneType' object is not iterable
+        # If 'NoneType|int' object is not iterable
         except TypeError:
-            return
+            if received_data == COMM_RESTART:
+                raise RestartApplication
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #

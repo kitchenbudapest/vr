@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.1.6.666 (20150502)                        ##
+##                       Version: 0.1.6.676 (20150502)                        ##
 ##                                 File: TODO                                 ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -81,8 +81,16 @@ TODO:
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 8
+  - file: surface.py
+    line: 64
+    note: |
+          Check if self._vertices.children is still a KX_VertexProxy. It is
+          most probably not => update all the function definition's return signatures
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 9
   - file: main.py
-    line: 116
+    line: 120
     note: |
           pinches:
           - thumb + index  => move selected
@@ -91,31 +99,23 @@ TODO:
           - thumb + pinky  => deselect all
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 9
+  # 10
   - file: main.py
-    line: 235
+    line: 254
     note: |
           while pinching, make other fingers hidden
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 10
+  # 11
   - file: main.py
-    line: 268
+    line: 287
     note: |
           calculate the midpoint between index and thumb
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 11
-  - file: surface.py
-    line: 64
-    note: |
-          Check if self._vertices.children is still a KX_VertexProxy. It is
-          most probably not => update all the function definition's return signatures
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 12
   - file: app.py
-    line: 78
+    line: 80
     note: |
           make build-script work :)
           Import cutils modules => versioning
@@ -124,7 +124,7 @@ TODO:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 13
   - file: app.py
-    line: 155
+    line: 161
     note: |
           fake casted shadow with negative lamp:
           https://www.youtube.com/watch?v=iJUlqwKEdVQ
@@ -132,14 +132,14 @@ TODO:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 14
   - file: app.py
-    line: 201
+    line: 208
     note: |
           positioner(*finger.tip_position) => leaking memory and never returns
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 15
   - file: app.py
-    line: 206
+    line: 217
     note: |
           In the following order should things executed:
               1) both hands => it can block a single hand
@@ -185,7 +185,7 @@ HACK:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 1
   - file: app.py
-    line: 147
+    line: 153
     note: |
           Surface arguments should be protoype_creator methods, instead of
           actual objects, but right now, prototyping the surface object
@@ -195,7 +195,7 @@ HACK:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 2
   - file: app.py
-    line: 158
+    line: 164
     note: |
           yuck.. this is getting out of hands now :(:(:(
 
@@ -214,7 +214,7 @@ NOTE:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 2
   - file: app.py
-    line: 97
+    line: 103
     note: |
           local->global: http://blenderartists.org/forum/archive/index.php/t-180690.html
 

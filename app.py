@@ -1,14 +1,14 @@
 ## INFO ########################################################################
 ##                                                                            ##
-##                                  kibu-vr                                   ##
+##                                  plastey                                   ##
 ##                                  =======                                   ##
 ##                                                                            ##
-##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.5.590 (20150429)                        ##
+##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
+##                       Version: 0.1.6.672 (20150502)                        ##
 ##                                File: app.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
-##                            <http://vr.kibu.hu>.                            ##
+##                         <http://plastey.kibu.hu>.                          ##
 ##              Copyright (C) 2015 Peter Varo, Kitchen Budapest               ##
 ##                                                                            ##
 ##  This program is free software: you can redistribute it and/or modify it   ##
@@ -63,7 +63,9 @@ from const import (OBJ_PROTOTYPE_FINGER,
                    COMM_THIS_PORT,
                    COMM_OTHER_HOST,
                    COMM_OTHER_PORT,
-                   COMM_IS_MASTER)
+                   COMM_IS_MASTER,
+                   COMM_RUNNING,
+                   COMM_RESTART)
 
 # Import conditional user modules
 if COMM_IS_PAIRED:
@@ -88,6 +90,10 @@ MOUNTED_ON_DESK = 1
 # Local references of blender constants
 SPACE_KEY       = bge.events.SPACEKEY
 JUST_ACTIVATED  = bge.logic.KX_INPUT_JUST_ACTIVATED
+
+
+#------------------------------------------------------------------------------#
+class RestartApplication(Exception): pass
 
 
 
@@ -171,10 +177,10 @@ class Application(CallbackManager):
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def __call__(self):
+        self.set_states(restart=COMM_RUNNING)
         # If user pressed the space bar => restart game
         if bge.logic.keyboard.events[SPACE_KEY] == JUST_ACTIVATED:
-            bge.logic.restartGame()
-            return
+            self.set_states(restart=COMM_RESTART)
 
         # Get current values of oculus-rift
         rift_frame = self._rift_controller.frame()
@@ -182,9 +188,9 @@ class Application(CallbackManager):
         leap_frame = self._leap_controller.frame()
 
         # Set camera position and orientation
-        self._camera.worldPosition = rift_frame.position
-        self._camera.worldOrientation = \
-            RIFT_ORIENTATION_SHIFT*Quaternion(rift_frame.orientation)
+        #self._camera.worldPosition = rift_frame.position
+        #self._camera.worldOrientation = \
+        #    RIFT_ORIENTATION_SHIFT*Quaternion(rift_frame.orientation)
 
         # If leap was unable to get a proper frame
         if not leap_frame.is_valid:
@@ -193,15 +199,20 @@ class Application(CallbackManager):
         # If leap was able to get the frame set finger positions
         selector   = self._selector
         positioner = self._positioner
-        self.execute_all_callbacks()
-        for leap_hand in leap_frame.hands:
-            hand = selector(leap_hand.is_right)
-            hand.set_states(hand=hand, leap_hand=leap_hand)
-            for finger in leap_hand.fingers:
-                # TODO: positioner(*finger.tip_position) => leaking memory and never returns
-                hand.finger_by_leap(finger.type()).position = positioner(finger.tip_position)
-            hand.execute_all_callbacks()
-        self._hands.execute_all_callbacks()
+        try:
+            self.execute_all_callbacks()
+            for leap_hand in leap_frame.hands:
+                hand = selector(leap_hand.is_right)
+                hand.set_states(hand=hand, leap_hand=leap_hand)
+                for finger in leap_hand.fingers:
+                    # TODO: positioner(*finger.tip_position) => leaking memory and never returns
+                    hand.finger_by_leap(finger.type()).position = positioner(finger.tip_position)
+                hand.execute_all_callbacks()
+            self._hands.execute_all_callbacks()
+        except RestartApplication:
+            bge.logic.restartGame()
+            return
+
 
         # TODO: In the following order should things executed:
         #           1) both hands => it can block a single hand
