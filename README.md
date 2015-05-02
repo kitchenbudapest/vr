@@ -4,6 +4,9 @@ Blender + Python 3 + LeapMotion + Oculus Rift under Arch Linux
 LeapMotion and Python 3 API
 ---------------------------
 
+**NOTE:** *Do not plug the Leap into a USB 3.0 port, for some unknown reason, it
+will be massively slower, than on a standard USB 2.0 port*
+
 - Install repository based SDK and drivers:
 
         $ yaourt -S leap-motion-sdk leap-motion-driver

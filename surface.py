@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.1.5.628 (20150501)                        ##
+##                       Version: 0.1.6.651 (20150502)                        ##
 ##                              File: surface.py                              ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -61,13 +61,15 @@ class Surface:
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    # TODO: Check if self._vertices.children is still a KX_VertexProxy. It is
+    #       most probably not => update all the function definition's return signatures
     def __iter__(self) -> 'KX_VertexProxy':
         yield from self._vertices.children
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def __getitem__(self, index) -> 'KX_VertexProxy':
-        return self._vertices.children[index]
+    def __getitem__(self, identifier: 'index or name') -> 'KX_VertexProxy':
+        return self._vertices.children[identifier]
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
@@ -81,17 +83,17 @@ class Surface:
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def select(self, index) -> 'KX_VertexProxy':
-        if index in self._locked:
+    def select(self, identifier: 'index or name') -> 'KX_VertexProxy':
+        if identifier in self._locked:
             raise VertexLocked
-        vertex = self._vertices.children[index]
-        self._selected[index] = vertex
+        vertex = self._vertices.children[identifier]
+        self._selected[identifier] = vertex
         return vertex
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def deselect(self, index) -> 'KX_VertexProxy':
-        return self._selected.pop(index, None)
+    def deselect(self, identifier: 'index or name') -> 'KX_VertexProxy':
+        return self._selected.pop(identifier, None)
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
@@ -107,15 +109,15 @@ class Surface:
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def lock(self, index) -> 'KX_VertexProxy':
-        vertex = self._vertices.children[index]
-        self._locked[index] = vertex
+    def lock(self, identifier: 'index or name') -> 'KX_VertexProxy':
+        vertex = self._vertices.children[identifier]
+        self._locked[identifier] = vertex
         return vertex
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def unlock(self, index) -> 'KX_VertexProxy':
-        return self._locked.pop(index, None)
+    def unlock(self, identifier: 'index or name') -> 'KX_VertexProxy':
+        return self._locked.pop(identifier, None)
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #

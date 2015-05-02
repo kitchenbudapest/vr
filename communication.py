@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.1.5.617 (20150501)                        ##
+##                       Version: 0.1.5.636 (20150502)                        ##
 ##                           File: communication.py                           ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -32,7 +32,9 @@ from itertools    import count
 from sys          import getsizeof
 from pickle       import dumps, loads, HIGHEST_PROTOCOL
 from socket       import socket, AF_INET, SOCK_STREAM, SHUT_RDWR
-from errno        import EISCONN # Transport endpoint is already connected
+from errno        import (EISCONN,      # Transport endpoint is already connected
+                          EADDRINUSE,   # Address already in use
+                          ECONNREFUSED) # COnnection refused
 
 # Import blender modules
 import bge
@@ -58,7 +60,11 @@ class Socket:
         address = this_host, this_port
         self._buffer_size = buffer_size
         self._socket = socket(AF_INET, SOCK_STREAM)
-        self._socket.bind(address)
+        try:
+            self._socket.bind(address)
+        except OSError as exception:
+            if exception.errno != EADDRINUSE:
+                raise exception
         print('[ OKAY ] Socket created')
 
 
@@ -89,7 +95,6 @@ class Server(Socket):
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def transfer(self, data):
-        print('[ WAIT ] Data transfer...')
         self._connection.send(dumps(data, HIGHEST_PROTOCOL))
         return loads(self._connection.recv(self._buffer_size))
 
@@ -122,14 +127,15 @@ class Client(Socket):
             try:
                 self._socket.connect((other_host, other_port))
             except OSError as exception:
-                if exception.errno != EISCONN:
+                if exception.errno == ECONNREFUSED:
+                    continue
+                elif exception.errno != EISCONN:
                     raise exception
                 return
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def transfer(self, data):
-        print('[ WAIT ] Data transfer...')
+        received_data = loads(self._socket.recv(self._buffer_size))
         self._socket.send(dumps(data, HIGHEST_PROTOCOL))
-        data = loads(self._socket.recv(self._buffer_size))
-        print('[ OKAY ] Data has been sent')
+        return received_data

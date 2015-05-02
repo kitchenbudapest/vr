@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.1.5.631 (20150501)                        ##
+##                       Version: 0.1.6.666 (20150502)                        ##
 ##                                 File: TODO                                 ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -27,7 +27,7 @@
 ##                                                                            ##
 ######################################################################## INFO ##
 
-#---------------------------- 14 POSTS IN 7 FILES -----------------------------#
+#---------------------------- 15 POSTS IN 8 FILES -----------------------------#
 TODO:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 1
@@ -53,20 +53,67 @@ TODO:
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 4
+  - file: pyvr/src/oculus.c
+    line: 310
+    note: |
+          make index optional !!! 
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 5
+  - file: communication.py
+    line: 42
+    note: |
+          instead of pickle use struct => https://docs.python.org/3.4/library/struct.html
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 6
   - file: generator.py
-    line: 179
+    line: 180
     note: |
           figure out how to set values, when falloff_type='CUSTOM_CURVE'
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 5
+  # 7
   - file: generator.py
-    line: 235
+    line: 236
     note: |
           it is very likely that the vertices list is not needed!
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 6
+  # 8
+  - file: main.py
+    line: 116
+    note: |
+          pinches:
+          - thumb + index  => move selected
+          - thumb + middle => select
+          - thumb + ring   => deselect
+          - thumb + pinky  => deselect all
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 9
+  - file: main.py
+    line: 235
+    note: |
+          while pinching, make other fingers hidden
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 10
+  - file: main.py
+    line: 268
+    note: |
+          calculate the midpoint between index and thumb
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 11
+  - file: surface.py
+    line: 64
+    note: |
+          Check if self._vertices.children is still a KX_VertexProxy. It is
+          most probably not => update all the function definition's return signatures
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 12
   - file: app.py
     line: 78
     note: |
@@ -75,7 +122,7 @@ TODO:
           import build
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 7
+  # 13
   - file: app.py
     line: 155
     note: |
@@ -83,14 +130,14 @@ TODO:
           https://www.youtube.com/watch?v=iJUlqwKEdVQ
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 8
+  # 14
   - file: app.py
     line: 201
     note: |
           positioner(*finger.tip_position) => leaking memory and never returns
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 9
+  # 15
   - file: app.py
     line: 206
     note: |
@@ -100,45 +147,6 @@ TODO:
               3) one finger
           Try to make the access of data and the execution of callbacks to
           a single (optimised) loop if possible
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 10
-  - file: communication.py
-    line: 40
-    note: |
-          instead of pickle use struct => https://docs.python.org/3.4/library/struct.html
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 11
-  - file: main.py
-    line: 102
-    note: |
-          pinches:
-          - thumb + index  => move selected
-          - thumb + middle => select
-          - thumb + ring   => deselect
-          - thumb + pinky  => deselect all
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 12
-  - file: main.py
-    line: 235
-    note: |
-          while pinching, make other fingers hidden
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 13
-  - file: main.py
-    line: 268
-    note: |
-          calculate the midpoint between index and thumb
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 14
-  - file: pyvr/src/oculus.c
-    line: 310
-    note: |
-          make index optional !!! 
 
 
 

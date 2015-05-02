@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.1.5.621 (20150501)                        ##
+##                       Version: 0.1.5.641 (20150502)                        ##
 ##                               File: const.py                               ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -39,11 +39,15 @@ config = ConfigParser()
 with open('config.ini', encoding='utf-8') as file:
     config.read_file(file)
 
+# Internal details
+INT_BLENDER_COUNTER      = config['Internal']['blender_counter']
+
 # Blender object names
 OBJ_PROTOTYPE_FINGER     = config['Names']['finger_object']
 OBJ_PROTOTYPE_SURFACE    = config['Names']['armature_object']
 OBJ_PROTOTYPE_VERTEX_ALL = config['Names']['armature_control']
 OBJ_GLOBAL               = config['Names']['logic']
+OBJ_DOT                  = config['Names']['dot_object'] + INT_BLENDER_COUNTER
 
 # Communication settings
 COMM_IS_PAIRED           = bool(eval(config['Communication']['paired']))

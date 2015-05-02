@@ -1,14 +1,14 @@
 ## INFO ########################################################################
 ##                                                                            ##
-##                                  kibu-vr                                   ##
+##                                  plastey                                   ##
 ##                                  =======                                   ##
 ##                                                                            ##
-##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.4.545 (20150424)                        ##
+##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
+##                       Version: 0.1.5.641 (20150502)                        ##
 ##                             File: generator.py                             ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
-##                            <http://vr.kibu.hu>.                            ##
+##                         <http://plastey.kibu.hu>.                          ##
 ##              Copyright (C) 2015 Peter Varo, Kitchen Budapest               ##
 ##                                                                            ##
 ##  This program is free software: you can redistribute it and/or modify it   ##
@@ -61,6 +61,7 @@ with open('config.ini', encoding='utf-8') as file:
     config.read_file(file)
 
 # Modul level constants from user's config
+INT_BLENDER_COUNTER     = config['Internal']['blender_counter']
 VR_MESH_WIRE_WIDTH      = float(config['Dimensions']['mesh_wire_width'])
 VR_MESH_FACE_WIDTH      = float(config['Dimensions']['mesh_face_width'])
 VR_MESH_FACE_HEIGHT     = float(config['Dimensions']['mesh_face_height'])
@@ -95,9 +96,9 @@ VR_GEOMETRY_MESH        = config['Names']['geometry_mesh']
 VR_ARMATURE_CONTROL     = config['Names']['armature_control']
 VR_ARMATURE_ARMATURE    = config['Names']['armature_armature']
 VR_ARMATURE_OBJECT      = config['Names']['armature_object']
-VR_ARMATURE_BONE        = config['Names']['armature_bone']
-VR_DOT_OBJECT           = config['Names']['dot_object']
-VR_DOT_MESH             = config['Names']['dot_mesh']
+VR_ARMATURE_BONE        = config['Names']['armature_bone'] + INT_BLENDER_COUNTER
+VR_DOT_OBJECT           = config['Names']['dot_object'] + INT_BLENDER_COUNTER
+VR_DOT_MESH             = config['Names']['dot_mesh'] + INT_BLENDER_COUNTER
 VR_MATERIAL_GEOMETRY    = config['Names']['material_geometry']
 VR_MATERIAL_WIRE        = config['Names']['material_wire']
 VR_MATERIAL_DOT         = config['Names']['material_dot']
