@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.1.5.641 (20150502)                        ##
+##                       Version: 0.1.6.694 (20150503)                        ##
 ##                             File: generator.py                             ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -148,20 +148,22 @@ scene.objects.link(arm_object)
 scene.objects.link(fng_object)
 
 # Make scene active
-bpy.context.screen.scene           = scene
-scene.render.engine                = 'BLENDER_GAME'
-scene.game_settings.material_mode  = 'GLSL'
-scene.game_settings.show_mouse     = True
-scene.game_settings.stereo         = 'STEREO'
-scene.game_settings.stereo_mode    = 'SIDEBYSIDE'
-scene.game_settings.frequency      = VR_REFRESH_RATE
-scene.game_settings.samples        = 'SAMPLES_8'
-scene.game_settings.resolution_x   = VR_RESOLUTION_X
-scene.game_settings.resolution_y   = VR_RESOLUTION_Y
-scene.render.resolution_x          = int(VR_RESOLUTION_X / 2)
-scene.render.resolution_y          = VR_RESOLUTION_Y
-scene.game_settings.physics_engine = 'NONE'
-scene.game_settings.raster_storage = 'VERTEX_ARRAY'
+bpy.context.screen.scene            = scene
+scene.render.engine                 = 'BLENDER_GAME'
+scene.game_settings.material_mode   = 'GLSL'
+scene.game_settings.show_mouse      = True
+scene.game_settings.stereo          = 'STEREO'
+scene.game_settings.stereo_mode     = 'SIDEBYSIDE'
+scene.game_settings.frequency       = VR_REFRESH_RATE
+scene.game_settings.samples         = 'SAMPLES_8'
+scene.game_settings.resolution_x    = VR_RESOLUTION_X
+scene.game_settings.resolution_y    = VR_RESOLUTION_Y
+scene.render.resolution_x           = int(VR_RESOLUTION_X / 2)
+scene.render.resolution_y           = VR_RESOLUTION_Y
+scene.game_settings.exit_key        = 'NONE'
+scene.game_settings.physics_engine  = 'NONE'
+scene.game_settings.show_fullscreen = True
+scene.game_settings.raster_storage  = 'VERTEX_ARRAY'
 
 # Set world properties
 world.horizon_color          = VR_WORLD_COLOR

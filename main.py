@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.1.6.672 (20150502)                        ##
+##                       Version: 0.1.6.694 (20150503)                        ##
 ##                               File: main.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -39,13 +39,16 @@ from linmath import Vec3, Mat4x4
 
 # Import user modules
 from surface import VertexLocked
-from app     import (Application,
+from app     import (index_of_vertex,
+                     name_of_vertex,
+                     Application,
+                     EscapeApplication,
                      RestartApplication,
                      MOUNTED_ON_DESK,
                      MOUNTED_ON_HEAD)
 
 # Import global level constants
-from const import (OBJ_DOT,
+from const import (APP_ESCAPED,
                    COLOR_ROTATE_PINCH_BASE,
                    COLOR_ROTATE_PINCH_OKAY,
                    COLOR_GRAB_PINCH_BASE,
@@ -79,15 +82,6 @@ def distance(position1, position2):
 
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-def index_of_vertex(vertex_name):
-    return int(vertex_name.split('.')[-1])
-
-#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-def name_of_vertex(vertex_index):
-    return OBJ_DOT.format(vertex_index)
-
-
-#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
 def rotation_matrix_from_vectors(direction, target_direction):
     v = target_direction.cross_product(direction)
     skew = Mat4x4(( 0.0, -v.z,  v.y,  0.0),
@@ -109,13 +103,16 @@ class KibuVR(Application):
     def __init__(self, *args, **kwargs):
         super().__init__(MOUNTED_ON_DESK, *args, **kwargs)
 
+        # Set escape handler
+        self.append_callback('exit', self.on_exit)
+        self.append_callback('reset', self.on_reset)
+
+        # Set communication
         if COMM_IS_PAIRED:
             self.append_callback('comm', self.on_communication)
             if not COMM_IS_MASTER:
                 self.vertex_origo.applyRotation((0, 0, radians(180)))
                 self.surface.update()
-        else:
-            self.append_callback('local', self.on_local)
 
         # TODO: pinches:
         #       - thumb + index  => move selected
@@ -142,28 +139,29 @@ class KibuVR(Application):
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def on_local(self, states):
+    def on_exit(self, states):
+        if states['escape'] == APP_ESCAPED:
+            raise EscapeApplication
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def on_reset(self, states):
         if states['restart'] == COMM_RESTART:
             raise RestartApplication
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def on_communication(self, states):
-        # If application detected a restart
-        if states['restart'] == COMM_RESTART:
-            self._connection.transfer(COMM_RESTART)
-            raise RestartApplication
-        else:
-            # Local reference
-            surface = self.surface
-            # Prepare and send data
-            data = []
-            for identifier, vertex in surface.selected():
-                vertex_position = vertex.localPosition
-                data.append((index_of_vertex(vertex.name),
-                             vertex_position[0],
-                             vertex_position[1],
-                             vertex_position[2]))
+        # Local reference
+        surface = self.surface
+        # Prepare and send data
+        data = []
+        for identifier, vertex in surface.selected():
+            vertex_position = vertex.localPosition
+            data.append((index_of_vertex(vertex.name),
+                         vertex_position[0],
+                         vertex_position[1],
+                         vertex_position[2]))
 
         # Receive data and act based on it
         for vertex in surface.unlock_all():

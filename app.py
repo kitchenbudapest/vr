@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.1.6.672 (20150502)                        ##
+##                       Version: 0.1.6.694 (20150503)                        ##
 ##                                File: app.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -28,7 +28,9 @@
 ######################################################################## INFO ##
 
 # Import python modules
-from sys import path as sys_path, stderr
+from datetime import datetime
+from pickle   import dump, HIGHEST_PROTOCOL
+from sys      import path as sys_path, stderr
 
 # Import leap modules
 sys_path.insert(0, '/usr/lib/Leap')
@@ -47,10 +49,14 @@ from surface  import Surface
 from callback import CallbackManager
 
 # Import global level constants
-from const import (OBJ_PROTOTYPE_FINGER,
+from const import (INT_OUTPUT_FILE,
+                   APP_RUNNING,
+                   APP_ESCAPED,
+                   OBJ_PROTOTYPE_FINGER,
                    OBJ_PROTOTYPE_SURFACE,
                    OBJ_PROTOTYPE_VERTEX_ALL,
                    OBJ_GLOBAL,
+                   OBJ_DOT,
                    COLOR_GEOMETRY_DARK,
                    LEAP_MULTIPLIER,
                    RIFT_MULTIPLIER,
@@ -89,11 +95,25 @@ MOUNTED_ON_HEAD = 0
 MOUNTED_ON_DESK = 1
 # Local references of blender constants
 SPACE_KEY       = bge.events.SPACEKEY
+ESCAPE_KEY      = bge.events.ESCKEY
 JUST_ACTIVATED  = bge.logic.KX_INPUT_JUST_ACTIVATED
+
+
+
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+def index_of_vertex(vertex_name):
+    return int(vertex_name.split('.')[-1])
+
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+def name_of_vertex(vertex_index):
+    return OBJ_DOT.format(vertex_index)
+
 
 
 #------------------------------------------------------------------------------#
 class RestartApplication(Exception): pass
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+class EscapeApplication(Exception): pass
 
 
 
@@ -121,6 +141,13 @@ class Application(CallbackManager):
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def __init__(self, mounted_on_desk, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Remove current exit key (make it available for customised setting)
+        # HACK: There is no 'NONE_KEY' defined, so setting the escape key to 0
+        #       could cause undefined behaviour, as it is undocomunted. During
+        #       the tests, this setting did not activate any of the keys, so it
+        #       is a working work-around. (At least on Arch Linux)
+        bge.logic.setExitKey(0)
+
         try:
             # Create connection
             self._connection = Connection(this_host=COMM_THIS_HOST,
@@ -177,9 +204,12 @@ class Application(CallbackManager):
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def __call__(self):
-        self.set_states(restart=COMM_RUNNING)
+        self.set_states(restart=COMM_RUNNING,
+                        escape =APP_RUNNING)
         # If user pressed the space bar => restart game
-        if bge.logic.keyboard.events[SPACE_KEY] == JUST_ACTIVATED:
+        if bge.logic.keyboard.events[ESCAPE_KEY] == JUST_ACTIVATED:
+            self.set_states(escape=APP_ESCAPED)
+        elif bge.logic.keyboard.events[SPACE_KEY] == JUST_ACTIVATED:
             self.set_states(restart=COMM_RESTART)
 
         # Get current values of oculus-rift
@@ -209,9 +239,12 @@ class Application(CallbackManager):
                     hand.finger_by_leap(finger.type()).position = positioner(finger.tip_position)
                 hand.execute_all_callbacks()
             self._hands.execute_all_callbacks()
+        except EscapeApplication:
+            self._clean_up()
+            bge.logic.endGame()
         except RestartApplication:
+            self._clean_up()
             bge.logic.restartGame()
-            return
 
 
         # TODO: In the following order should things executed:
@@ -222,7 +255,6 @@ class Application(CallbackManager):
         #       a single (optimised) loop if possible
 
         #print(leap_frame.images)
-
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def _select_right_hand_on_head(self, is_left):
@@ -260,3 +292,19 @@ class Application(CallbackManager):
                 setattr(object, preference, value)
             return object
         return creator
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def _clean_up(self):
+        # Close connection if app is paired
+        try:
+            self.connection.stop()
+        except AttributeError:
+            pass
+        # Save created mesh
+        mesh = {}
+        for vertex in self._surface:
+            mesh[index_of_vertex(vertex.name)] = tuple(vertex.localPosition)
+        with open(INT_OUTPUT_FILE.format(datetime.now()), mode='b+w') as file:
+            dump(mesh, file, protocol=HIGHEST_PROTOCOL)
+        print('[OKAY] a temporary file has been saved')

@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.1.6.672 (20150502)                        ##
+##                       Version: 0.1.6.686 (20150503)                        ##
 ##                               File: const.py                               ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -41,6 +41,11 @@ with open('config.ini', encoding='utf-8') as file:
 
 # Internal details
 INT_BLENDER_COUNTER      = config['Internal']['blender_counter']
+INT_OUTPUT_FILE          = config['Internal']['output_file']
+
+# Application constants
+APP_RUNNING              =  0
+APP_ESCAPED              = -1
 
 # Blender object names
 OBJ_PROTOTYPE_FINGER     = config['Names']['finger_object']

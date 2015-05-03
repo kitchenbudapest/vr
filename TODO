@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.1.6.676 (20150502)                        ##
+##                       Version: 0.1.7.716 (20150503)                        ##
 ##                                 File: TODO                                 ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -67,20 +67,6 @@ TODO:
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 6
-  - file: generator.py
-    line: 180
-    note: |
-          figure out how to set values, when falloff_type='CUSTOM_CURVE'
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 7
-  - file: generator.py
-    line: 236
-    note: |
-          it is very likely that the vertices list is not needed!
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 8
   - file: surface.py
     line: 64
     note: |
@@ -88,9 +74,23 @@ TODO:
           most probably not => update all the function definition's return signatures
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 7
+  - file: generator.py
+    line: 182
+    note: |
+          figure out how to set values, when falloff_type='CUSTOM_CURVE'
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 8
+  - file: generator.py
+    line: 238
+    note: |
+          it is very likely that the vertices list is not needed!
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 9
   - file: main.py
-    line: 120
+    line: 117
     note: |
           pinches:
           - thumb + index  => move selected
@@ -101,21 +101,21 @@ TODO:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 10
   - file: main.py
-    line: 254
+    line: 252
     note: |
           while pinching, make other fingers hidden
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 11
   - file: main.py
-    line: 287
+    line: 285
     note: |
           calculate the midpoint between index and thumb
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 12
   - file: app.py
-    line: 80
+    line: 86
     note: |
           make build-script work :)
           Import cutils modules => versioning
@@ -124,7 +124,7 @@ TODO:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 13
   - file: app.py
-    line: 161
+    line: 188
     note: |
           fake casted shadow with negative lamp:
           https://www.youtube.com/watch?v=iJUlqwKEdVQ
@@ -132,14 +132,14 @@ TODO:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 14
   - file: app.py
-    line: 208
+    line: 238
     note: |
           positioner(*finger.tip_position) => leaking memory and never returns
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 15
   - file: app.py
-    line: 217
+    line: 250
     note: |
           In the following order should things executed:
               1) both hands => it can block a single hand
@@ -180,12 +180,22 @@ BUG:
 
 
 
-#----------------------------- 2 POSTS IN 1 FILES -----------------------------#
+#----------------------------- 3 POSTS IN 1 FILES -----------------------------#
 HACK:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 1
   - file: app.py
-    line: 153
+    line: 145
+    note: |
+          There is no 'NONE_KEY' defined, so setting the escape key to 0
+          could cause undefined behaviour, as it is undocomunted. During
+          the tests, this setting did not activate any of the keys, so it
+          is a working work-around. (At least on Arch Linux)
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 2
+  - file: app.py
+    line: 180
     note: |
           Surface arguments should be protoype_creator methods, instead of
           actual objects, but right now, prototyping the surface object
@@ -193,9 +203,9 @@ HACK:
           like that..
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 2
+  # 3
   - file: app.py
-    line: 164
+    line: 191
     note: |
           yuck.. this is getting out of hands now :(:(:(
 
@@ -214,7 +224,7 @@ NOTE:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 2
   - file: app.py
-    line: 103
+    line: 123
     note: |
           local->global: http://blenderartists.org/forum/archive/index.php/t-180690.html
 

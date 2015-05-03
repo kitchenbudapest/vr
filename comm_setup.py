@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.1.5.613 (20150501)                        ##
+##                       Version: 0.1.7.708 (20150503)                        ##
 ##                            File: comm_setup.py                             ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -44,28 +44,45 @@ with open('config.ini', encoding='utf-8') as file:
 # Module level constants
 SET_DEV = 'sudo ip link set {DEVICE} up'
 ADD_DEV = 'sudo ip address add {HOST}/24 dev {DEVICE}'
-GET_DEV = 'ip address show dev {DEVICE}'
+GET_DEV = 'ip address show dev {DEVICE} scope global to {HOST}'
+
+
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+# Module level variables
+host   = config['Communication']['this_host']
+device = (config['Communication']['device'] or
+          next(n for n in check_output('ls /sys/class/net', shell=True).split()
+                   if n.startswith(b'en')).decode('utf-8'))
+
+#------------------------------------------------------------------------------#
+def setup(user_host=None,
+          user_device=None,
+          user_pass=''):
+    return print(user_pass)
+    # Create container for setup settings
+    settings = {}
+    # Check if user specified a host and a network device name
+    user_host   = user_host or host
+    user_device = user_device or device
+    # Start using device
+    call(SET_DEV.format(DEVICE=device), shell=True)
+    # Set TCP/IP address for device
+    call(ADD_DEV.format(HOST=host, DEVICE=device), shell=True)
 
 
 
 #------------------------------------------------------------------------------#
-def setup():
-    # Create container for setup settings
-    settings = {}
-    # Check if user specified a network device name
-    device = (config['Communication']['device'] or
-              next(n for n in check_output('ls /sys/class/net', shell=True).split()
-                   if n.startswith(b'en')).decode('utf-8'))
-    # Start using device
-    call(SET_DEV.format(DEVICE=device), shell=True)
-    # Set TCP/IP address for device
-    call(ADD_DEV.format(HOST=config['Communication']['this_host'],
-                        DEVICE=device), shell=True)
+def check(user_host=None,
+          user_device=None):
+    # Check if user specified a host and a network device name
+    user_host   = user_host or host
+    user_device = user_device or device
     # Show result
-    call(GET_DEV.format(DEVICE=device), shell=True)
+    return bool(check_output(GET_DEV.format(HOST=host, DEVICE=device), shell=True))
 
 
 
 #------------------------------------------------------------------------------#
 if __name__ == '__main__':
     setup()
+    check()
