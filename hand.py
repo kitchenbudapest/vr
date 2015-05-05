@@ -1,14 +1,14 @@
 ## INFO ########################################################################
 ##                                                                            ##
-##                                  kibu-vr                                   ##
+##                                  plastey                                   ##
 ##                                  =======                                   ##
 ##                                                                            ##
-##        Oculus Rift + Leap Motion + Python 3 + Blender + Arch Linux         ##
-##                       Version: 0.1.2.481 (20150420)                        ##
+##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
+##                       Version: 0.1.8.791 (20150505)                        ##
 ##                               File: hand.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
-##                            <http://vr.kibu.hu>.                            ##
+##                         <http://plastey.kibu.hu>.                          ##
 ##              Copyright (C) 2015 Peter Varo, Kitchen Budapest               ##
 ##                                                                            ##
 ##  This program is free software: you can redistribute it and/or modify it   ##
@@ -131,14 +131,23 @@ class Hand(CallbackManager):
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def __iter__(self):
+        yield from self._fingers.values()
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def fingers_except_thumb(self):
+        yield from (self.index, self.middle, self.ring, self.pinky)
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def finger_by_leap(self, leap_type):
         return self._fingers[leap_type]
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def hide(self, *fingers, all_except=[]):
-
-
+        # TODO: implement excepttion
         for finger in fingers:
             self._fingers[finger].visible = False
 
@@ -184,3 +193,7 @@ class Hands(CallbackManager):
         # arguments during the execution of callbacks
         self.set_states(left_hand  = self._left,
                         right_hand = self._right)
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def __iter__(self):
+        yield from (self._left, self._right)

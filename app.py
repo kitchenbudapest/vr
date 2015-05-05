@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.1.6.694 (20150503)                        ##
+##                       Version: 0.1.8.826 (20150505)                        ##
 ##                                File: app.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -47,6 +47,7 @@ from mathutils import Vector, Matrix, Euler, Quaternion
 from hand     import Hands
 from surface  import Surface
 from callback import CallbackManager
+from utils    import save_to_file, load_from_file
 
 # Import global level constants
 from const import (INT_OUTPUT_FILE,
@@ -97,16 +98,6 @@ MOUNTED_ON_DESK = 1
 SPACE_KEY       = bge.events.SPACEKEY
 ESCAPE_KEY      = bge.events.ESCKEY
 JUST_ACTIVATED  = bge.logic.KX_INPUT_JUST_ACTIVATED
-
-
-
-#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-def index_of_vertex(vertex_name):
-    return int(vertex_name.split('.')[-1])
-
-#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-def name_of_vertex(vertex_index):
-    return OBJ_DOT.format(vertex_index)
 
 
 
@@ -233,6 +224,7 @@ class Application(CallbackManager):
             self.execute_all_callbacks()
             for leap_hand in leap_frame.hands:
                 hand = selector(leap_hand.is_right)
+                # TODO: do I still need to set the states of these?
                 hand.set_states(hand=hand, leap_hand=leap_hand)
                 for finger in leap_hand.fingers:
                     # TODO: positioner(*finger.tip_position) => leaking memory and never returns
@@ -302,9 +294,6 @@ class Application(CallbackManager):
         except AttributeError:
             pass
         # Save created mesh
-        mesh = {}
-        for vertex in self._surface:
-            mesh[index_of_vertex(vertex.name)] = tuple(vertex.localPosition)
-        with open(INT_OUTPUT_FILE.format(datetime.now()), mode='b+w') as file:
-            dump(mesh, file, protocol=HIGHEST_PROTOCOL)
+        save_to_file(path=INT_OUTPUT_FILE.format(datetime.now()),
+                     data=self._surface.serialise())
         print('[OKAY] a temporary file has been saved')

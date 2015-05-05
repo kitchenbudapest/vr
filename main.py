@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.1.6.694 (20150503)                        ##
+##                       Version: 0.1.8.826 (20150505)                        ##
 ##                               File: main.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -38,10 +38,11 @@ from mathutils import Matrix
 from linmath import Vec3, Mat4x4
 
 # Import user modules
-from surface import VertexLocked
-from app     import (index_of_vertex,
-                     name_of_vertex,
-                     Application,
+from utils   import (name_of_vertex,
+                     index_of_vertex)
+from surface import (VertexLocked,
+                     VertexAlreadySelected)
+from app     import (Application,
                      EscapeApplication,
                      RestartApplication,
                      MOUNTED_ON_DESK,
@@ -72,6 +73,15 @@ PINCH_FINGERS_DISTANCE        = 2
 PINCH_VERTEX_FINGERS_DISTANCE = 1
 
 
+PICK_HOLD_DISTANCE    = 3.5
+PICK_RELEASE_DISTANCE = 2.5
+GRAB_HOLD_DISTANCE    = 3.5
+GRAB_RELEASE_DISTANCE = 2.5
+
+ZOOM_SCALE_FACTOR     = 0.1
+ROTATE_SCALE_FACTOR   = 0.1
+
+
 
 # Helper functions
 #------------------------------------------------------------------------------#
@@ -79,6 +89,13 @@ def distance(position1, position2):
     return sqrt(pow(position2[0] - position1[0], 2) +
                 pow(position2[1] - position1[1], 2) +
                 pow(position2[2] - position1[2], 2))
+
+
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+def midpoint(position1, position2):
+    return ((position1[0] + position2[0])/2,
+            (position1[1] + position2[1])/2,
+            (position1[2] + position2[2])/2)
 
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
@@ -120,7 +137,14 @@ class KibuVR(Application):
         #       - thumb + ring   => deselect
         #       - thumb + pinky  => deselect all
 
+        # States
         self._prev_grabbed_line = None
+
+
+        self._is_picked   = False
+        self._is_grabbed  = False
+        self._grab_vertex = None
+        self._grab_vector = None
 
         # Set callback-states which will be used
         # duyring the execution of the callbacks
@@ -131,11 +155,12 @@ class KibuVR(Application):
 
         # Set actual callbacks
         self.hands.append_callback('grab', self.on_grab)
-        self.hands.right.append_callback('pinch', self.on_pinch)
-        self.hands.left.append_callback('pinch', self.on_pinch)
+        self.hands.right.append_callback('pick', self.on_pick)
+        self.hands.left.append_callback('pick', self.on_pick)
 
         self.hands.right.append_callback('grabbing', self.on_grabbing)
         self.hands.left.append_callback('grabbing', self.on_grabbing)
+
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
@@ -185,7 +210,7 @@ class KibuVR(Application):
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def on_grab(self, states):
+    def on_grab_(self, states):
         left    = states['left_hand']
         right   = states['right_hand']
         grabbed = False
@@ -245,6 +270,114 @@ class KibuVR(Application):
         # Set hand-level callback state
         left.set_states(grabbed=grabbed)
         right.set_states(grabbed=grabbed)
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def on_grab(self, states):
+        grabbing = []
+        for hand in self.hands:
+            thumb_position = hand.thumb.position
+            for finger in (hand.index,
+                           hand.middle):
+                if not distance(thumb_position,
+                                finger.position) < GRAB_RELEASE_DISTANCE:
+                    hand.set_states(grabbed=False)
+                    break
+            else:
+                grabbing.append(hand)
+                hand.set_states(grabbed=True)
+        # If both hands are grabbing
+        try:
+            left_hand, right_hand = grabbing
+            print('[ ROTATING ]')
+        except ValueError:
+            # If only one hand is grabbing
+            try:
+                tp = grabbing[0].thumb.position
+                # If this grab is part of a previous grab-cycle
+                try:
+                    vp = self._grab_vertex.worldPosition
+                    # Calculate vector between thumb and vertex
+                    new_grab_vector = Vec3.from_line(tp[0], tp[1], tp[2],
+                                                     vp[0], vp[1], vp[2])
+                    movement = self._grab_vector - new_grab_vector
+                    for _, vertex in self.surface.selected():
+                        vertex.applyMovement(movement)
+                    # Update geometry
+                    self.surface.update()
+                # If this grab is starting a new grab-cycle
+                except AttributeError:
+                    try:
+                        _, self._grab_vertex = next(self.surface.selected())
+                    # If grabbing but nothing is selected
+                    except StopIteration:
+                        return
+                    vp = self._grab_vertex.worldPosition
+                    # Calculate vector between thumb and vertex
+                    new_grab_vector = Vec3.from_line(tp[0], tp[1], tp[2],
+                                                     vp[0], vp[1], vp[2])
+                # Set new grab-vector as previous one
+                self._grab_vector = new_grab_vector
+                print('[ GRABBING ]')
+            # If none of the hands are grabbing
+            except IndexError:
+                self._grab_vertex = self._grab_vector = None
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def on_pick(self, states):
+        # IF there is a grabbing going on
+        if states['grabbed']:
+            return
+        # Get local reference of this hand
+        hand = states['hand']
+        # Local reference
+        thumb_position = hand.thumb.position
+        # Check all fingers
+        for finger in hand.fingers_except_thumb():
+            # If finger's distance to the thumb is in the picking-release-range
+            if distance(thumb_position,
+                        finger.position) < PICK_RELEASE_DISTANCE:
+                # Local reference
+                surface = self.surface
+                pick_position = midpoint(thumb_position, finger.position)
+                # Check all vertices on the surface
+                for vertex in surface:
+                    # If vertex's distance to the thumb is in the picking-hold-range
+                    if distance(pick_position,
+                                vertex.worldPosition) < PICK_HOLD_DISTANCE:
+                        # If user is already picking
+                        if self._is_picked:
+                            return
+                        # Try to select vertex
+                        try:
+                            surface.select(vertex.name)
+                            vertex.color = COLOR_GEOMETRY_LITE
+                            print('[ SELECTED ] vertex:', vertex.name)
+                        # If vertex has been selected by the opponent user
+                        except VertexLocked:
+                            return
+                        except VertexAlreadySelected:
+                            # If user already released the previous pick
+                            surface.deselect(vertex.name)
+                            vertex.color = COLOR_GEOMETRY_BASE
+                            print('[DESELECTED] vertex:', vertex.name)
+                        # Set state
+                        self._is_picked = True
+                        # Feedback the user about the pick's state
+                        hand.thumb.color = finger.color = COLOR_GRAB_PINCH_OKAY
+                        # Stop the iterations
+                        return
+        # If pick is released
+        else:
+            # Feedback the user about the pick's state
+            hand.thumb.color  = \
+            hand.index.color  = \
+            hand.middle.color = \
+            hand.ring.color   = \
+            hand.pinky.color  = COLOR_GRAB_PINCH_BASE
+            # Set state
+            self._is_picked = False
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #

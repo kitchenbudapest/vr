@@ -5,7 +5,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.1.7.708 (20150503)                        ##
+##                       Version: 0.1.8.772 (20150505)                        ##
 ##                              File: plastey.py                              ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -29,24 +29,31 @@
 ######################################################################## INFO ##
 
 # Import python modules
-from subprocess import check_output
-from tkinter    import (Tk,
-                        Toplevel,
-                        Label,
-                        Entry,
-                        Button,
-                        Radiobutton,
-                        StringVar,
-                        BooleanVar,
-                        TOP,
-                        BOTH,
-                        CENTER,
-                        W as WEST,
-                        E as EAST,
-                        NW as NORTH_WEST)
+from subprocess   import Popen, PIPE
+from configparser import ConfigParser
+from tkinter      import (Tk,
+                          Toplevel,
+                          Label,
+                          Entry,
+                          Button,
+                          Radiobutton,
+                          StringVar,
+                          BooleanVar,
+                          TOP,
+                          BOTH,
+                          CENTER,
+                          W as WEST,
+                          E as EAST,
+                          NW as NORTH_WEST)
 
 # Import plastey modules
-from comm_setup import setup, check
+from comm_setup import setup, check, CommunicationSetupError
+
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+# Read configuration
+config = ConfigParser()
+with open('config.ini', encoding='utf-8') as file:
+    config.read_file(file)
 
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
@@ -57,10 +64,10 @@ BASE_OPENED_GEOMETRY = False
 BASE_CLOSED_GEOMETRY = True
 COMM_SOCKET_CLIENT   = False
 COMM_SOCKET_SERVER   = True
-COMM_THIS_HOST       = '10.0.0.1'
-COMM_THIS_PORT       = '6677'
-COMM_OTHER_HOST      = '10.0.0.2'
-COMM_OTHER_PORT      = '6677'
+COMM_THIS_HOST       = config['Communication']['this_host']
+COMM_THIS_PORT       = config['Communication']['this_port']
+COMM_OTHER_HOST      = config['Communication']['other_host']
+COMM_OTHER_PORT      = config['Communication']['other_port']
 ADDR_NO_ADDRESS      = 'Address not bound.'
 ADDR_HAVE_ADDRESS    = 'Address bound.'
 CONN_NOT_CONNECTED   = 'Disconnected.'
@@ -69,10 +76,29 @@ GUI_PAD_X            = 16
 GUI_PAD_Y            = GUI_PAD_X
 GUI_SECTION_PAD_X    = 32
 GUI_SECTION_PAD_Y    = GUI_SECTION_PAD_X
+DRAW_FULL_SCREEN     = bool(eval(config['Render']['full_screen']))
+DRAW_DISPLAY_X       = int(config['Render']['display_x'])
+DRAW_DISPLAY_Y       = int(config['Render']['display_y'])
+DRAW_RESOLUTION_X    = int(config['Render']['resolution_x'])
+DRAW_RESOLUTION_Y    = int(config['Render']['resolution_y'])
 
 # Set external module level constants
 with open('WARNING', encoding='utf-8') as file:
     WARN_TEXT = file.read()
+
+
+#------------------------------------------------------------------------------#
+class Report(Toplevel):
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def __init__(self, message, *args, **kwargs):
+        Toplevel.__init__(self, *args, **kwargs)
+
+        Label(master = self,
+              text   = message).pack()
+        Button(master  = self,
+               text    = 'OK',
+               command = self.destroy)
 
 
 #------------------------------------------------------------------------------#
@@ -88,27 +114,33 @@ class Password(Toplevel):
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def __init__(self, *args, **kwargs):
+    def __init__(self, string_var, *args, **kwargs):
         Toplevel.__init__(self, *args, **kwargs)
+
         self.wm_title('SUDO Password')
+
+        Label(master = self,
+              text   = 'Root password:').pack()
+
         self._input = input = Entry(master = self,
                                     show   = '*')
-        input.bind('<KeyRelease-Return>', lambda e: self.set_pass(input.get()))
-        input.pack(side=TOP, fill=BOTH, expand=True)
 
+        def set_pass(*args, **kwargs):
+            string_var.set(input.get())
+            self.destroy()
 
-    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def set_pass(self, value):
-        self._pass = value
-        try:
-            self.on_return()
-        except AttributeError:
-            return
+        input.bind('<KeyRelease-Return>', set_pass)
+        #input.pack(side=TOP, fill=BOTH, expand=True)
+        input.pack()
+        input.focus_set()
 
+        Button(master  = self,
+               text    = 'Cancel',
+               command = self.destroy).pack()
 
-    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def get_pass(self):
-        return self._pass
+        Button(master  = self,
+               text    = 'OK',
+               command = set_pass).pack()
 
 
 
@@ -125,6 +157,7 @@ class Plastey(Tk):
         self._mode       = BooleanVar()
         self._base       = BooleanVar()
         self._comm       = BooleanVar()
+        self._pass       = StringVar()
         self._addressed  = StringVar()
         self._connected  = StringVar()
         self._this_host  = StringVar()
@@ -139,12 +172,16 @@ class Plastey(Tk):
         self._mode.set(MODE_SINGLE_PLAYER)
         self._base.set(BASE_OPENED_GEOMETRY)
         self._comm.set(COMM_SOCKET_SERVER)
+        self._pass.set('')
         self._addressed.set(ADDR_HAVE_ADDRESS if check(COMM_THIS_HOST) else ADDR_NO_ADDRESS)
         self._connected.set(CONN_NOT_CONNECTED)
         self._this_host.set(COMM_THIS_HOST)
         self._this_port.set(COMM_THIS_PORT)
         self._other_host.set(COMM_THIS_HOST)
         self._other_port.set(COMM_OTHER_PORT)
+
+        # Follow changes on password
+        self._pass.trace('w', self._on_bind_address)
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
@@ -208,6 +245,19 @@ class Plastey(Tk):
                     variable = self._base).grid(row    = row,
                                                 column = col,
                                                 sticky = WEST)
+        row += 1
+
+        # Start oculus-daemon
+        Label(master = self,
+              text   = 'Daemons:').grid(row    = row,
+                                        column = col,
+                                        sticky = WEST)
+        row += 1
+        Button(master  = self,
+               text    = 'Start OVRD',
+               command = self._on_start_oculus_daemon).grid(row    = row,
+                                                            column = col,
+                                                            sticky = WEST)
 
         # Set column spacing
         self.columnconfigure(index = col,
@@ -282,7 +332,7 @@ class Plastey(Tk):
 
         Button(master  = self,
                text    = 'Bind address',
-               command = self._on_bind_address).grid(row        = row,
+               command = self._on_ask_password).grid(row        = row,
                                                      column     = col,
                                                      sticky     = WEST + EAST)
         Label(master       = self,
@@ -333,32 +383,34 @@ class Plastey(Tk):
         row += 1
         Button(master  = self,
                text    = 'Save log file',
-               command = self._on_save_log).grid(row    = row,
+               command = self._on_save_log).grid(row     = row,
                                                   column = col,
                                                   sticky = WEST + EAST)
         row += 1
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def _ask_for_password(self):
-        self._dialog = Password()
-        self._dialog.on_return = self._on_bind_address
+    def _on_ask_password(self, *args, **kwargs):
+        # Create a password-dialog
+        self._dialog = Password(self._pass)
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def _on_bind_address(self, *args, **kwargs):
-        try:
-            print(self._dialog.get_pass())
-        except AttributeError:
-            self._ask_for_password()
+    def _on_start_oculus_daemon(self, *args, **kwargs):
+        print('starting daemon...')
 
-        return
-        print(self._this_host, user_pass=Password(master=self).get_pass())
-        status = check(COMM_THIS_HOST)
-        if not status:
-            setup(self._this_host, user_pass=self._dialog.get_pass())
-            self._dialog.destroy()
-            self._addressed.set(ADDR_HAVE_ADDRESS if status else ADDR_NO_ADDRESS)
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def _on_bind_address(self, *args, **kwargs):
+        # Check for status and if address is not bound
+        if not check(COMM_THIS_HOST):
+            # Bind address
+            try:
+                setup(self._this_host, user_pass=self._pass.get())
+            except CommunicationSetupError as exception:
+                Report(exception.error)
+            # Check status and report to user
+            self._addressed.set(ADDR_HAVE_ADDRESS if check(COMM_THIS_HOST)
+                                                  else ADDR_NO_ADDRESS)
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
@@ -368,7 +420,25 @@ class Plastey(Tk):
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def _on_start_game(self, *args, **kwargs):
-        print(check_output('./plastey', shell=True).decode('utf-8'))
+        # HACK: Is this really the best option we have, to get into fullscreen,
+        #       other than using the blender's fullscreen option, which will
+        #       unfortunately resize the display's resolution??? :(
+        window_command = ['sleep 1']
+        window_command.append('wmctrl -r :ACTIVE: '
+                              '-e 0,{},{},{},{}'.format(DRAW_DISPLAY_X,
+                                                        DRAW_DISPLAY_Y,
+                                                        DRAW_RESOLUTION_X,
+                                                        DRAW_RESOLUTION_Y))
+        if DRAW_FULL_SCREEN:
+            window_command.append('wmctrl -r :ACTIVE: -b add,fullscreen')
+
+        for command in (' && '.join(window_command),
+                        './plastey'):
+            Popen(args   = command,
+                  shell  = True,
+                  stdin  = PIPE,
+                  stderr = PIPE,
+                  universal_newlines=True)
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #

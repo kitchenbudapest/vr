@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.1.6.694 (20150503)                        ##
+##                       Version: 0.1.8.724 (20150504)                        ##
 ##                             File: generator.py                             ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -162,7 +162,7 @@ scene.render.resolution_x           = int(VR_RESOLUTION_X / 2)
 scene.render.resolution_y           = VR_RESOLUTION_Y
 scene.game_settings.exit_key        = 'NONE'
 scene.game_settings.physics_engine  = 'NONE'
-scene.game_settings.show_fullscreen = True
+scene.game_settings.show_fullscreen = False
 scene.game_settings.raster_storage  = 'VERTEX_ARRAY'
 
 # Set world properties

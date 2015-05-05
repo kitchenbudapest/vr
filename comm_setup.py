@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.1.7.708 (20150503)                        ##
+##                       Version: 0.1.8.761 (20150504)                        ##
 ##                            File: comm_setup.py                             ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -29,7 +29,7 @@
 
 # Import python modules
 from configparser import ConfigParser
-from subprocess   import call, check_output
+from subprocess   import Popen, PIPE, call, check_output
 
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
@@ -42,8 +42,8 @@ with open('config.ini', encoding='utf-8') as file:
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
 # Module level constants
-SET_DEV = 'sudo ip link set {DEVICE} up'
-ADD_DEV = 'sudo ip address add {HOST}/24 dev {DEVICE}'
+SET_DEV = 'sudo -S ip link set {DEVICE} up'
+ADD_DEV = 'sudo -S ip address add {HOST}/24 dev {DEVICE}'
 GET_DEV = 'ip address show dev {DEVICE} scope global to {HOST}'
 
 
@@ -55,28 +55,33 @@ device = (config['Communication']['device'] or
                    if n.startswith(b'en')).decode('utf-8'))
 
 #------------------------------------------------------------------------------#
-def setup(user_host=None,
-          user_device=None,
-          user_pass=''):
-    return print(user_pass)
-    # Create container for setup settings
-    settings = {}
-    # Check if user specified a host and a network device name
-    user_host   = user_host or host
-    user_device = user_device or device
-    # Start using device
-    call(SET_DEV.format(DEVICE=device), shell=True)
-    # Set TCP/IP address for device
-    call(ADD_DEV.format(HOST=host, DEVICE=device), shell=True)
+class CommunicationSetupError(Exception):
+
+    def __init__(self, error):
+        self.error = error
 
 
 
 #------------------------------------------------------------------------------#
-def check(user_host=None,
-          user_device=None):
-    # Check if user specified a host and a network device name
-    user_host   = user_host or host
-    user_device = user_device or device
+def setup(user_host=host,
+          user_device=device,
+          user_pass=''):
+    # Set up device and set TCP/IP address for it
+    for command in (SET_DEV.format(DEVICE=device),
+                    ADD_DEV.format(HOST=host, DEVICE=device)):
+        # Start using device
+        _, response = Popen(args   = command,
+                            stdin  = PIPE,
+                            stderr = PIPE,
+                            shell  = True,
+                            universal_newlines = True).communicate(user_pass + '\n')
+        if response:
+            raise CommunicationSetupError(response)
+
+
+#------------------------------------------------------------------------------#
+def check(user_host=host,
+          user_device=device):
     # Show result
     return bool(check_output(GET_DEV.format(HOST=host, DEVICE=device), shell=True))
 

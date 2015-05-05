@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.1.6.651 (20150502)                        ##
+##                       Version: 0.1.8.775 (20150505)                        ##
 ##                              File: surface.py                              ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -27,8 +27,21 @@
 ##                                                                            ##
 ######################################################################## INFO ##
 
+# Import python modules
+from itertools import count
+from pickle    import dump, load, HIGHEST_PROTOCOL
+
+# Import user modules
+from utils import name_of_vertex
+
+
 #------------------------------------------------------------------------------#
 class VertexLocked(Exception): pass
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+class VertexAlreadySelected(Exception): pass
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+class SerialisedDataUnmatched(Exception): pass
+
 
 
 #------------------------------------------------------------------------------#
@@ -86,6 +99,8 @@ class Surface:
     def select(self, identifier: 'index or name') -> 'KX_VertexProxy':
         if identifier in self._locked:
             raise VertexLocked
+        if identifier in self._selected:
+            raise VertexAlreadySelected
         vertex = self._vertices.children[identifier]
         self._selected[identifier] = vertex
         return vertex
@@ -125,3 +140,24 @@ class Surface:
         locked = tuple(self._locked.values())
         self._locked = {}
         return locked
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def serialise(self) -> 'list':
+        coords = []
+        vertices_children = self._vertices.children
+        try:
+            for i in count():
+                coords.extend(vertices_children[name_of_vertex(i)].localPosition)
+        except KeyError:
+            return coords
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def deserialise(self, coords):
+        vertices_children = self._vertices.children
+        try:
+            for i, coord in enumerate(zip(*(iter(coords),)*3)):
+                vertices_children[name_of_vertex(i)].localPosition = coord
+        except KeyError:
+            raise SerialisedDataUnmatched
