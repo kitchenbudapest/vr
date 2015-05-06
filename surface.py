@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.1.8.775 (20150505)                        ##
+##                       Version: 0.1.8.830 (20150506)                        ##
 ##                              File: surface.py                              ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -28,6 +28,7 @@
 ######################################################################## INFO ##
 
 # Import python modules
+from random    import choice
 from itertools import count
 from pickle    import dump, load, HIGHEST_PROTOCOL
 

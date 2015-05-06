@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.1.8.826 (20150505)                        ##
+##                       Version: 0.1.8.841 (20150506)                        ##
 ##                               File: main.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -28,7 +28,7 @@
 ######################################################################## INFO ##
 
 # Import python modules
-from itertools import repeat
+from itertools import repeat, chain
 from math import sqrt, radians
 
 # Import blender modules
@@ -68,15 +68,10 @@ from const import (APP_ESCAPED,
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
 # Module level constants
-GRAB_STRENGTH                 = 0.98
-PINCH_FINGERS_DISTANCE        = 2
-PINCH_VERTEX_FINGERS_DISTANCE = 1
-
-
 PICK_HOLD_DISTANCE    = 3.5
 PICK_RELEASE_DISTANCE = 2.5
-GRAB_HOLD_DISTANCE    = 3.5
-GRAB_RELEASE_DISTANCE = 2.5
+#GRAB_HOLD_DISTANCE    = 3.5
+GRAB_RELEASE_DISTANCE = 3.5
 
 ZOOM_SCALE_FACTOR     = 0.1
 ROTATE_SCALE_FACTOR   = 0.1
@@ -131,36 +126,21 @@ class KibuVR(Application):
                 self.vertex_origo.applyRotation((0, 0, radians(180)))
                 self.surface.update()
 
-        # TODO: pinches:
-        #       - thumb + index  => move selected
-        #       - thumb + middle => select
-        #       - thumb + ring   => deselect
-        #       - thumb + pinky  => deselect all
-
-        # States
-        self._prev_grabbed_line = None
-
-
-        self._is_picked   = False
-        self._is_grabbed  = False
-        self._grab_vertex = None
-        self._grab_vector = None
+        # Set initial states
+        self._is_picked        = False
+        self._grab_position    = None
+        self._dual_grab_vector = None
+        self._dual_grab_length = None
 
         # Set callback-states which will be used
         # duyring the execution of the callbacks
-        self.hands.left.set_states(grabbed=False,
-                                   selected_vertices=None)
-        self.hands.right.set_states(grabbed=False,
-                                    selected_vertices=None)
+        self.hands.left.set_states(grabbed=False)
+        self.hands.right.set_states(grabbed=False)
 
         # Set actual callbacks
         self.hands.append_callback('grab', self.on_grab)
         self.hands.right.append_callback('pick', self.on_pick)
         self.hands.left.append_callback('pick', self.on_pick)
-
-        self.hands.right.append_callback('grabbing', self.on_grabbing)
-        self.hands.left.append_callback('grabbing', self.on_grabbing)
-
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
@@ -205,123 +185,94 @@ class KibuVR(Application):
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def on_grabbing(self, states):
-        states['hand'].grab_strength = states['leap_hand'].grab_strength
-
-
-    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def on_grab_(self, states):
-        left    = states['left_hand']
-        right   = states['right_hand']
-        grabbed = False
-
-        try:
-            left_grab = left.grab_strength
-            right_grab = right.grab_strength
-        except AttributeError:
-            return
-
-        # If both hands are pinching with thumb and middle
-        #if (distance(left.thumb.position,
-        #             left.middle.position) < PINCH_FINGERS_DISTANCE and
-        #    distance(right.thumb.position,
-        #             right.middle.position) < PINCH_FINGERS_DISTANCE):
-        if (left_grab  >= GRAB_STRENGTH and
-            right_grab >= GRAB_STRENGTH):
-
-                left.hide(all_except=('thumb'))
-                right.hide(all_except=('thumb'))
-                left.thumb.color = right.thumb.color = COLOR_ROTATE_PINCH_OKAY
-
-                lpos = left.thumb.position
-                rpos = right.thumb.position
-                curr_grabbed_line = Vec3.from_line(lpos[0], lpos[1], lpos[2],
-                                                   rpos[0], rpos[1], rpos[2])
-                curr_grabbed_line_length = curr_grabbed_line.length
-                curr_grabbed_line = curr_grabbed_line.normalize()
-
-                # If previous orientation line has a vector
-                if self._prev_grabbed_line:
-                    grabbed = True
-                    rotation = rotation_matrix_from_vectors(self._prev_grabbed_line,
-                                                            curr_grabbed_line)
-
-                    rotation = Matrix(tuple(rotation)).to_euler()
-                    self.vertex_origo.applyRotation((-rotation[0],
-                                                     -rotation[1],
-                                                     -rotation[2]))
-                    try:
-                        scale = 1/(self._prev_grabbed_line_length/curr_grabbed_line_length)
-                        self.vertex_origo.worldScale = \
-                            [old*new for old, new in zip(self.vertex_origo.worldScale, repeat(scale))]
-                    except ZeroDivisionError:
-                        pass
-
-                    self.surface.update()
-
-                # Store current line as previous one for the next cycle
-                self._prev_grabbed_line = curr_grabbed_line
-                self._prev_grabbed_line_length = curr_grabbed_line_length
-        # If only one or none of the hands are pinching with thumb and middle
-        else:
-            left.color = right.color = COLOR_ROTATE_PINCH_BASE
-            self._prev_grabbed_line = None
-
-        # Set hand-level callback state
-        left.set_states(grabbed=grabbed)
-        right.set_states(grabbed=grabbed)
-
-
-    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def on_grab(self, states):
         grabbing = []
+        # Check both hands
         for hand in self.hands:
             thumb_position = hand.thumb.position
+            # Check index and middle fingers as well
             for finger in (hand.index,
                            hand.middle):
+                # If thumb's and the finger's distance
+                # is beyond the grabbing-release-range
                 if not distance(thumb_position,
                                 finger.position) < GRAB_RELEASE_DISTANCE:
+                    # Set state and stop checking the other finger
                     hand.set_states(grabbed=False)
                     break
+            # If both fingers are in the range of grabbing-release-range
             else:
+                # Set state, and collect hand in the grabbing-hands list
                 grabbing.append(hand)
                 hand.set_states(grabbed=True)
+
         # If both hands are grabbing
         try:
+            # Get hands separately
             left_hand, right_hand = grabbing
+            #  Color thumbs and hide other fingers, so it won't confuse the user
+            left_hand.thumb.color = right_hand.thumb.color = COLOR_ROTATE_PINCH_OKAY
+            left_hand.hide(all_except=('thumb',))
+            right_hand.hide(all_except=('thumb',))
+            # Get the thumb positionS
+            ltp = left_hand.thumb.position
+            rtp = right_hand.thumb.position
+            # Get essentaial informations about the current state
+            curr_grab_vector = Vec3.from_line(ltp[0], ltp[1], ltp[2],
+                                              rtp[0], rtp[1], rtp[2])
+            curr_grab_length = curr_grab_vector.length
+            curr_grab_vector = curr_grab_vector.normalize()
+            # If this grab is part of a previous grab-cycle
+            try:
+                rotation = Matrix(tuple(rotation_matrix_from_vectors(self._dual_grab_vector,
+                                                                     curr_grab_vector))).to_euler()
+                # Rotate parent object of all vertices
+                self.vertex_origo.applyRotation((-rotation[0],
+                                                 -rotation[1],
+                                                 -rotation[2]))
+                # Scale the parent object
+                try:
+                    scale = 1/(self._dual_grab_length/curr_grab_length)
+                    self.vertex_origo.worldScale = \
+                        [old*new for old, new in zip(self.vertex_origo.worldScale, repeat(scale))]
+                except ZeroDivisionError:
+                    pass
+                # Update geometry
+                self.surface.update()
+            # If this grab is a new grab-cycle
+            except TypeError:
+                pass
+            # Store current values as previous ones for the next cycle
+            self._dual_grab_vector = curr_grab_vector
+            self._dual_grab_length = curr_grab_length
             print('[ ROTATING ]')
         except ValueError:
             # If only one hand is grabbing
             try:
-                tp = grabbing[0].thumb.position
+                curr = tuple(grabbing[0].thumb.position)
+                prev = self._grab_position
                 # If this grab is part of a previous grab-cycle
                 try:
-                    vp = self._grab_vertex.worldPosition
-                    # Calculate vector between thumb and vertex
-                    new_grab_vector = Vec3.from_line(tp[0], tp[1], tp[2],
-                                                     vp[0], vp[1], vp[2])
-                    movement = self._grab_vector - new_grab_vector
+                    # Calculate vector between previous
+                    # and current thumb positions
+                    movement = Vec3.from_line(prev[0], prev[1], prev[2],
+                                              curr[0], curr[1], curr[2])
+                    # Move all selected vertices
                     for _, vertex in self.surface.selected():
                         vertex.applyMovement(movement)
                     # Update geometry
                     self.surface.update()
                 # If this grab is starting a new grab-cycle
-                except AttributeError:
-                    try:
-                        _, self._grab_vertex = next(self.surface.selected())
-                    # If grabbing but nothing is selected
-                    except StopIteration:
-                        return
-                    vp = self._grab_vertex.worldPosition
-                    # Calculate vector between thumb and vertex
-                    new_grab_vector = Vec3.from_line(tp[0], tp[1], tp[2],
-                                                     vp[0], vp[1], vp[2])
-                # Set new grab-vector as previous one
-                self._grab_vector = new_grab_vector
+                except TypeError:
+                    pass
+                # Store current position as previous one for the next cycle
+                self._grab_position = curr
                 print('[ GRABBING ]')
             # If none of the hands are grabbing
             except IndexError:
-                self._grab_vertex = self._grab_vector = None
+                self._grab_position    = \
+                self._dual_grab_vector = \
+                self._dual_grab_length = None
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #

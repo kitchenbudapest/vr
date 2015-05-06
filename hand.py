@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.1.8.791 (20150505)                        ##
+##                       Version: 0.1.8.841 (20150506)                        ##
 ##                               File: hand.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -78,8 +78,20 @@ class Finger(CallbackManager):
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    @property
+    def scale(self):
+        return self._scale
+    @scale.setter
+    def scale(self, value):
+        self._object.localScale = (value,)*3
+        self._scale = value
+        self.execute_callbacks('scale')
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def __init__(self, object, *args, **kwargs):
         super().__init__(valid_references=self.REFERENCES, *args, **kwargs)
+        self._scale  = 1.0
         self._object = object
         self.set_states(finger=object)
 
