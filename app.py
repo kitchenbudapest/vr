@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.1.8.826 (20150505)                        ##
+##                       Version: 0.1.9.869 (20150507)                        ##
 ##                                File: app.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -28,6 +28,7 @@
 ######################################################################## INFO ##
 
 # Import python modules
+from math     import radians
 from datetime import datetime
 from pickle   import dump, HIGHEST_PROTOCOL
 from sys      import path as sys_path, stderr
@@ -58,6 +59,7 @@ from const import (INT_OUTPUT_FILE,
                    OBJ_PROTOTYPE_VERTEX_ALL,
                    OBJ_GLOBAL,
                    OBJ_DOT,
+                   OBJ_TEXT,
                    COLOR_GEOMETRY_DARK,
                    LEAP_MULTIPLIER,
                    RIFT_MULTIPLIER,
@@ -151,17 +153,32 @@ class Application(CallbackManager):
         except NameError:
             pass
         # Create a new instance of the leap-motion controller
-        self._leap_controller = Leap.Controller()
+        self._leap_controller = leap_controller = Leap.Controller()
         # Create a new instance of the oculus-rift controller
         self._rift_controller = oculus.OculusRiftDK2(head_factor =RIFT_MULTIPLIER,
                                                      head_shift_y=RIFT_POSITION_SHIFT_Y,
                                                      head_shift_z=RIFT_POSITION_SHIFT_Z)
+
+        # Enable circle gesture
+        leap_controller.enable_gesture(Leap.Gesture.TYPE_CIRCLE)
+        # Configure circle gesture
+        leap_controller.config.set("Gesture.Circle.MinRadius", 100.0)
+        leap_controller.config.set("Gesture.Circle.MinArc", radians(359))
+        #leap_controller.config.set("Gesture.Swipe.MinLength", 200.0)
+        #leap_controller.config.set("Gesture.Swipe.MinVelocity", 750)
+        leap_controller.config.save()
+
         # Create a reference to the blender scene
         self._blender_scene = blender_scene = bge.logic.getCurrentScene()
 
         # Make references to blender objects
         self._camera = self._blender_scene.active_camera
         self._origo  = self._blender_scene.objects[OBJ_GLOBAL]
+        self._text   = self._blender_scene.objects[OBJ_TEXT]
+
+        # Set text details
+        self._text.resolution = 10
+        #self._text.text = 'This is a text'
 
         # Create hands
         self._hands = Hands(self._prototype_creator(OBJ_PROTOTYPE_FINGER))
@@ -209,9 +226,9 @@ class Application(CallbackManager):
         leap_frame = self._leap_controller.frame()
 
         # Set camera position and orientation
-        #self._camera.worldPosition = rift_frame.position
-        #self._camera.worldOrientation = \
-        #    RIFT_ORIENTATION_SHIFT*Quaternion(rift_frame.orientation)
+        self._camera.worldPosition = rift_frame.position
+        self._camera.worldOrientation = \
+            RIFT_ORIENTATION_SHIFT*Quaternion(rift_frame.orientation)
 
         # If leap was unable to get a proper frame
         if not leap_frame.is_valid:
@@ -222,10 +239,25 @@ class Application(CallbackManager):
         positioner = self._positioner
         try:
             self.execute_all_callbacks()
+            circle_cw = circle_ccw = False
+            for gesture in leap_frame.gestures():
+                if (gesture.type is Leap.Gesture.TYPE_CIRCLE and
+                    gesture.is_valid and
+                    gesture.state is Leap.Gesture.STATE_STOP):
+                        circle =  Leap.CircleGesture(gesture)
+                        if (circle.pointable.direction.angle_to(circle.normal) <= Leap.PI/2):
+                            circle_ccw=True
+                        else:
+                            circle_cw=True
+            self._hands.set_states(circle_cw=circle_cw,
+                                   circle_ccw=circle_ccw)
             for leap_hand in leap_frame.hands:
                 hand = selector(leap_hand.is_right)
                 # TODO: do I still need to set the states of these?
-                hand.set_states(hand=hand, leap_hand=leap_hand)
+                hand.set_states(hand=hand,
+                                circle_cw=circle_cw,
+                                circle_ccw=circle_ccw,
+                                leap_hand=leap_hand)
                 for finger in leap_hand.fingers:
                     # TODO: positioner(*finger.tip_position) => leaking memory and never returns
                     hand.finger_by_leap(finger.type()).position = positioner(finger.tip_position)
@@ -238,15 +270,7 @@ class Application(CallbackManager):
             self._clean_up()
             bge.logic.restartGame()
 
-
-        # TODO: In the following order should things executed:
-        #           1) both hands => it can block a single hand
-        #           2) one hand   => it can block a single finger
-        #           3) one finger
-        #       Try to make the access of data and the execution of callbacks to
-        #       a single (optimised) loop if possible
-
-        #print(leap_frame.images)
+        # TODO: use `leap_frame.images` as background
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def _select_right_hand_on_head(self, is_left):

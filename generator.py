@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.1.8.724 (20150504)                        ##
+##                       Version: 0.1.9.869 (20150507)                        ##
 ##                             File: generator.py                             ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -87,6 +87,8 @@ VR_SCENE                = config['Names']['scene']
 VR_WORLD                = config['Names']['world']
 VR_CAMERA_OBJECT        = config['Names']['camera_object']
 VR_CAMERA_DATA          = config['Names']['camera_data']
+VR_TEXT_OBJECT          = config['Names']['text_object']
+VR_TEXT_DATA            = config['Names']['text_data']
 VR_LAMP_TOP             = config['Names']['lamp_top']
 VR_LAMP_BOTTOM          = config['Names']['lamp_bottom']
 VR_LAMP_TOP_OBJECT      = config['Names']['lamp_top_object']
@@ -121,6 +123,7 @@ bpy.context.scene.cursor_location = 0, 0, 0
 # Create new scene, object and mesh
 scene       = bpy.data.scenes.new(VR_SCENE)
 camera      = bpy.data.cameras.new(VR_CAMERA_DATA)
+text        = bpy.data.curves.new(VR_TEXT_DATA, 'FONT')
 mesh        = bpy.data.meshes.new(VR_GEOMETRY_MESH)
 armature    = bpy.data.armatures.new(VR_ARMATURE_ARMATURE)
 world       = bpy.data.worlds.new(VR_WORLD)
@@ -131,6 +134,7 @@ lmp_object1 = bpy.data.objects.new(VR_LAMP_TOP, lamp_1)
 lmp_object2 = bpy.data.objects.new(VR_LAMP_BOTTOM, lamp_2)
 log_object  = bpy.data.objects.new(VR_LOGIC_OBJECT, None)
 cam_object  = bpy.data.objects.new(VR_CAMERA_OBJECT, camera)
+txt_object  = bpy.data.objects.new(VR_TEXT_OBJECT, text)
 geo_object  = bpy.data.objects.new(VR_GEOMETRY_OBJECT, mesh)
 ctl_object  = bpy.data.objects.new(VR_ARMATURE_CONTROL, None)
 arm_object  = bpy.data.objects.new(VR_ARMATURE_OBJECT, armature)
@@ -140,6 +144,7 @@ fng_object  = bpy.data.objects.new(VR_FINGER_OBJECT, fng_mesh)
 scene.world = world
 scene.objects.link(log_object)
 scene.objects.link(cam_object)
+scene.objects.link(txt_object)
 scene.objects.link(lmp_object1)
 scene.objects.link(lmp_object2)
 scene.objects.link(geo_object)
@@ -177,6 +182,13 @@ cam_object.rotation_euler = radians(66), 0, 0
 camera.lens               = 20
 camera.clip_start         = 0.1
 camera.clip_end           = 100
+
+# Set text object
+text.body           = 'Sample'
+text.align          = 'FLUSH'
+text.size           = 0.1
+txt_object.parent   = cam_object
+txt_object.location = -0.5, 0, -0.6
 
 # Set lamps
 # TODO: figure out how to set values, when falloff_type='CUSTOM_CURVE'
