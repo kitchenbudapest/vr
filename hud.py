@@ -4,8 +4,8 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.2.0.933 (20150509)                        ##
-##                              File: history.py                              ##
+##                       Version: 0.2.0.929 (20150509)                        ##
+##                                File: hud.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
 ##                         <http://plastey.kibu.hu>.                          ##
@@ -27,82 +27,56 @@
 ##                                                                            ##
 ######################################################################## INFO ##
 
+# Import python modules
 from collections import deque
 
-
 #------------------------------------------------------------------------------#
-class History(deque):
-
-    NONE = -1
-    UNDO =  0
-    REDO =  1
-    UNDO_PREFIX = '[UNDO] '
-    REDO_PREFIX = '[REDO] '
-    NONE_PREFIX = ''
+class Text:
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    @staticmethod
-    def event(function):
-        return lambda direction, prefix: function(direction, prefix)
-
-
-    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def __init__(self, function_if_empty, max_size=64, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._index = 0
-        self._empty = function_if_empty
-        # Set memory limit
-        max_len = self.maxlen
-        if (max_len is not None and
-            max_size <= max_len):
-            self._max_size = max_len
-        else:
-            self._max_size = max_size
+    def __init__(self, text_first_object,
+                       text_other_object,
+                       time_getter,
+                       interval):
+        self._text_first = text_first_object
+        self._text_other = text_other_object
+        self._get_time   = time_getter
+        self._interval   = interval
+        self._messages   = deque()
+        self._updated    = False
+        self._empty      = True
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def push(self, undo, redo):
-        after_undo = False
-        # If there was an undo before
-        for i in range(self._index + 1, len(self)):
-            after_undo = True
-            self.pop()
-        # If hit the memory limit
-        if len(self) >= self._max_size:
-            self.popleft()
-        # If this is after an undo call
-        elif after_undo:
-            self._index += 2
-        # If this is npot after an undo call
-        # nor hit the memory limit
-        else:
-            self._index += 1
-        # Finally add the new element
-        self.append((undo, redo))
-
-
-    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def do(self):
+    def update(self):
+        # If there are messages in the deque
         try:
-            self[self._index][self.REDO](self.NONE, self.NONE_PREFIX)
+            # If last message's time-stamp is older than current time
+            if (self._messages[-1][0] + self._interval) <= self._get_time():
+                # Remove oldest message and switch the updated-flag
+                self._messages.pop()
+                self._udpated = True
+        # If there is no message left in the deque
         except IndexError:
-            self._empty(self.NONE, self.NONE_PREFIX)
+            if not self._empty:
+                self._updated = True
+                self._empty   = True
+
+        # If messages were added or removed
+        if self._updated:
+            # Write the changed and constructed messages to display
+            messages = iter(m for _, m in self._messages)
+            try:
+                self._text_first.text = next(messages)
+                self._text_other.text = '\n'.join(messages)
+            except StopIteration:
+                self._text_first.text = self._text_other.text = ''
+            self._updated = False
+
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def undo(self):
-        try:
-            self._index -= 1
-            self[self._index][self.UNDO](self.UNDO, self.UNDO_PREFIX)
-        except IndexError:
-            self._empty(self.UNDO, self.UNDO_PREFIX)
-            self._index = 0
-
-
-    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def redo(self):
-        try:
-            self._index += 1
-            self[self._index][self.REDO](self.REDO, self.REDO_PREFIX)
-        except IndexError:
-            self._empty(self.REDO, self.REDO_PREFIX)
-            self._index = 0
+    def write(self, message):
+        # Add new message and switch the updated-flag
+        self._messages.appendleft((self._get_time(), message))
+        self._updated = True
+        self._empty   = False

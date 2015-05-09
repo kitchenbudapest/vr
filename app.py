@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.1.9.869 (20150507)                        ##
+##                       Version: 0.2.0.924 (20150509)                        ##
 ##                                File: app.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -45,6 +45,7 @@ import bge
 from mathutils import Vector, Matrix, Euler, Quaternion
 
 # Import user modules
+from hud      import Text
 from hand     import Hands
 from surface  import Surface
 from callback import CallbackManager
@@ -52,6 +53,7 @@ from utils    import save_to_file, load_from_file
 
 # Import global level constants
 from const import (INT_OUTPUT_FILE,
+                   INT_TEXT_INTERVAL,
                    APP_RUNNING,
                    APP_ESCAPED,
                    OBJ_PROTOTYPE_FINGER,
@@ -59,7 +61,10 @@ from const import (INT_OUTPUT_FILE,
                    OBJ_PROTOTYPE_VERTEX_ALL,
                    OBJ_GLOBAL,
                    OBJ_DOT,
-                   OBJ_TEXT,
+                   OBJ_TEXT_FIRST,
+                   OBJ_TEXT_OTHER,
+                   OBJ_HUD_SCENE,
+                   PROP_TEXT_TIMER,
                    COLOR_GEOMETRY_DARK,
                    LEAP_MULTIPLIER,
                    RIFT_MULTIPLIER,
@@ -117,6 +122,11 @@ class Application(CallbackManager):
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     @property
+    def text(self):
+        return self._text
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    @property
     def hands(self):
         return self._hands
 
@@ -170,15 +180,13 @@ class Application(CallbackManager):
 
         # Create a reference to the blender scene
         self._blender_scene = blender_scene = bge.logic.getCurrentScene()
+        bge.logic.addScene(OBJ_HUD_SCENE, 1)
+        # HUD scene has to be set up
+        self._preprocess = True
 
         # Make references to blender objects
-        self._camera = self._blender_scene.active_camera
-        self._origo  = self._blender_scene.objects[OBJ_GLOBAL]
-        self._text   = self._blender_scene.objects[OBJ_TEXT]
-
-        # Set text details
-        self._text.resolution = 10
-        #self._text.text = 'This is a text'
+        self._camera = blender_scene.active_camera
+        self._origo  = blender_scene.objects[OBJ_GLOBAL]
 
         # Create hands
         self._hands = Hands(self._prototype_creator(OBJ_PROTOTYPE_FINGER))
@@ -189,8 +197,8 @@ class Application(CallbackManager):
         #       actual objects, but right now, prototyping the surface object
         #       with its armature and all bones are not copying.. or something
         #       like that..
-        self._surface = Surface(self._blender_scene.objects[OBJ_PROTOTYPE_SURFACE],
-                                self._blender_scene.objects[OBJ_PROTOTYPE_VERTEX_ALL],
+        self._surface = Surface(blender_scene.objects[OBJ_PROTOTYPE_SURFACE],
+                                blender_scene.objects[OBJ_PROTOTYPE_VERTEX_ALL],
                                 COLOR_GEOMETRY_DARK)
 
         # TODO: fake casted shadow with negative lamp:
@@ -212,6 +220,26 @@ class Application(CallbackManager):
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def __call__(self):
+        # HACK: The ugliest hack I've ever done...
+        if self._preprocess:
+            try:
+                # Set HUD scene
+                self._blender_overlay_scene = bge.logic.getSceneList()[1]
+                # Stop preprocessing loops
+                self._preprocess = False
+                # Set text and its details
+                text_1st_obj = self._blender_overlay_scene.objects[OBJ_TEXT_FIRST]
+                text_nth_obj = self._blender_overlay_scene.objects[OBJ_TEXT_OTHER]
+                text_1st_obj.resolution = text_nth_obj.resolution = 10
+                # Create HUD messaging system
+                self._text = Text(text_first_object=text_1st_obj,
+                                  text_other_object=text_nth_obj,
+                                  time_getter=lambda: self._origo[PROP_TEXT_TIMER],
+                                  interval=INT_TEXT_INTERVAL)
+            except IndexError:
+                return
+
+        # Ste states
         self.set_states(restart=COMM_RUNNING,
                         escape =APP_RUNNING)
         # If user pressed the space bar => restart game
@@ -233,6 +261,9 @@ class Application(CallbackManager):
         # If leap was unable to get a proper frame
         if not leap_frame.is_valid:
             return print('(leap) Invalid frame', file=stderr)
+
+        # Update messaging system
+        self._text.update()
 
         # If leap was able to get the frame set finger positions
         selector   = self._selector

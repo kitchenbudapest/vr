@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.1.9.869 (20150507)                        ##
+##                       Version: 0.2.0.924 (20150509)                        ##
 ##                             File: generator.py                             ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -28,6 +28,7 @@
 ######################################################################## INFO ##
 
 # Import python modules
+from os.path      import join
 from math         import radians
 from colorsys     import hsv_to_rgb
 from configparser import ConfigParser
@@ -61,53 +62,69 @@ with open('config.ini', encoding='utf-8') as file:
     config.read_file(file)
 
 # Modul level constants from user's config
-INT_BLENDER_COUNTER     = config['Internal']['blender_counter']
-VR_MESH_WIRE_WIDTH      = float(config['Dimensions']['mesh_wire_width'])
-VR_MESH_FACE_WIDTH      = float(config['Dimensions']['mesh_face_width'])
-VR_MESH_FACE_HEIGHT     = float(config['Dimensions']['mesh_face_height'])
-VR_REGION_COUNT_X       = float(config['Dimensions']['region_count_x'])
-VR_REGION_COUNT_Y       = float(config['Dimensions']['region_count_y'])
-VR_SUBDIVISION_LEVEL_X  = float(config['Dimensions']['subdivision_level_x'])
-VR_SUBDIVISION_LEVEL_Y  = float(config['Dimensions']['subdivision_level_y'])
-VR_VERTEX_RADIUS        = float(config['Dimensions']['vertex_radius'])
-VR_FINGER_RADIUS        = float(config['Dimensions']['finger_radius'])
-VR_RESOLUTION_X         = int(config['Render']['resolution_x'])
-VR_RESOLUTION_Y         = int(config['Render']['resolution_y'])
-VR_REFRESH_RATE         = int(config['Render']['refresh_rate'])
-VR_FACE_COLOR           = hsv_to_rgb(*eval(config['Colors']['face_color']))
-VR_EDGE_COLOR           = hsv_to_rgb(*eval(config['Colors']['edge_color']))
-VR_WORLD_COLOR          = hsv_to_rgb(*eval(config['Colors']['world_color']))
-VR_DOT_COLOR            = hsv_to_rgb(*eval(config['Colors']['dot_color']))
-VR_LAMP_TOP_SIZE        = float(config['Lamps']['lamp_top_size'])
-VR_LAMP_TOP_DISTANCE    = float(config['Lamps']['lamp_top_distance'])
-VR_LAMP_BOTTOM_SIZE     = float(config['Lamps']['lamp_bottom_size'])
-VR_LAMP_BOTTOM_DISTANCE = float(config['Lamps']['lamp_bottom_distance'])
-VR_LOGIC_OBJECT         = config['Names']['logic']
-VR_SCENE                = config['Names']['scene']
-VR_WORLD                = config['Names']['world']
-VR_CAMERA_OBJECT        = config['Names']['camera_object']
-VR_CAMERA_DATA          = config['Names']['camera_data']
-VR_TEXT_OBJECT          = config['Names']['text_object']
-VR_TEXT_DATA            = config['Names']['text_data']
-VR_LAMP_TOP             = config['Names']['lamp_top']
-VR_LAMP_BOTTOM          = config['Names']['lamp_bottom']
-VR_LAMP_TOP_OBJECT      = config['Names']['lamp_top_object']
-VR_LAMP_BOTTOM_OBJECT   = config['Names']['lamp_bottom_object']
-VR_GEOMETRY_OBJECT      = config['Names']['geometry_object']
-VR_GEOMETRY_MESH        = config['Names']['geometry_mesh']
-VR_ARMATURE_CONTROL     = config['Names']['armature_control']
-VR_ARMATURE_ARMATURE    = config['Names']['armature_armature']
-VR_ARMATURE_OBJECT      = config['Names']['armature_object']
-VR_ARMATURE_BONE        = config['Names']['armature_bone'] + INT_BLENDER_COUNTER
-VR_DOT_OBJECT           = config['Names']['dot_object'] + INT_BLENDER_COUNTER
-VR_DOT_MESH             = config['Names']['dot_mesh'] + INT_BLENDER_COUNTER
-VR_MATERIAL_GEOMETRY    = config['Names']['material_geometry']
-VR_MATERIAL_WIRE        = config['Names']['material_wire']
-VR_MATERIAL_DOT         = config['Names']['material_dot']
-VR_FINGER_OBJECT        = config['Names']['finger_object']
-VR_FINGER_MESH          = config['Names']['finger_mesh']
-VR_DISTORTION_SHADER    = config['Scripts']['distortion_shader']
-VR_GAME_LOGIC           = config['Scripts']['game_logic']
+INT_BLENDER_COUNTER      = config['Internal']['blender_counter']
+VR_MESH_WIRE_WIDTH       = float(config['Dimensions']['mesh_wire_width'])
+VR_MESH_FACE_WIDTH       = float(config['Dimensions']['mesh_face_width'])
+VR_MESH_FACE_HEIGHT      = float(config['Dimensions']['mesh_face_height'])
+VR_REGION_COUNT_X        = float(config['Dimensions']['region_count_x'])
+VR_REGION_COUNT_Y        = float(config['Dimensions']['region_count_y'])
+VR_SUBDIVISION_LEVEL_X   = float(config['Dimensions']['subdivision_level_x'])
+VR_SUBDIVISION_LEVEL_Y   = float(config['Dimensions']['subdivision_level_y'])
+VR_VERTEX_RADIUS         = float(config['Dimensions']['vertex_radius'])
+VR_FINGER_RADIUS         = float(config['Dimensions']['finger_radius'])
+VR_RESOLUTION_X          = int(config['Render']['resolution_x'])
+VR_RESOLUTION_Y          = int(config['Render']['resolution_y'])
+VR_REFRESH_RATE          = int(config['Render']['refresh_rate'])
+VR_FACE_COLOR            = hsv_to_rgb(*eval(config['Colors']['face_color']))
+VR_EDGE_COLOR            = hsv_to_rgb(*eval(config['Colors']['edge_color']))
+VR_WORLD_COLOR           = hsv_to_rgb(*eval(config['Colors']['world_color']))
+VR_DOT_COLOR             = hsv_to_rgb(*eval(config['Colors']['dot_color']))
+VR_TEXT_FIRST_COLOR      = hsv_to_rgb(*eval(config['Colors']['text_color_first']))
+VR_TEXT_FIRST_ALPHA      = float(config['Colors']['text_alpha_first'])
+VR_TEXT_OTHER_COLOR      = hsv_to_rgb(*eval(config['Colors']['text_color_other']))
+VR_TEXT_OTHER_ALPHA      = float(config['Colors']['text_alpha_other'])
+VR_LAMP_TOP_SIZE         = float(config['Lamps']['lamp_top_size'])
+VR_LAMP_TOP_DISTANCE     = float(config['Lamps']['lamp_top_distance'])
+VR_LAMP_BOTTOM_SIZE      = float(config['Lamps']['lamp_bottom_size'])
+VR_LAMP_BOTTOM_DISTANCE  = float(config['Lamps']['lamp_bottom_distance'])
+VR_LOGIC_OBJECT          = config['Names']['logic']
+VR_SCENE                 = config['Names']['scene']
+VR_HUD_SCENE             = config['Names']['hud_scene']
+VR_WORLD                 = config['Names']['world']
+VR_CAMERA_OBJECT         = config['Names']['camera_object']
+VR_CAMERA_DATA           = config['Names']['camera_data']
+VR_CAMERA_HUD_OBJECT     = config['Names']['camera_hud_object']
+VR_CAMERA_HUD_DATA       = config['Names']['camera_hud_data']
+VR_TEXT_FIRST_OBJECT     = config['Names']['text_first_object']
+VR_TEXT_FIRST_DATA       = config['Names']['text_first_data']
+VR_TEXT_OTHER_OBJECT     = config['Names']['text_other_object']
+VR_TEXT_OTHER_DATA       = config['Names']['text_other_data']
+VR_LAMP_TOP              = config['Names']['lamp_top']
+VR_LAMP_BOTTOM           = config['Names']['lamp_bottom']
+VR_LAMP_TOP_OBJECT       = config['Names']['lamp_top_object']
+VR_LAMP_BOTTOM_OBJECT    = config['Names']['lamp_bottom_object']
+VR_GEOMETRY_OBJECT       = config['Names']['geometry_object']
+VR_GEOMETRY_MESH         = config['Names']['geometry_mesh']
+VR_ARMATURE_CONTROL      = config['Names']['armature_control']
+VR_ARMATURE_ARMATURE     = config['Names']['armature_armature']
+VR_ARMATURE_OBJECT       = config['Names']['armature_object']
+VR_ARMATURE_BONE         = config['Names']['armature_bone'] + INT_BLENDER_COUNTER
+VR_DOT_OBJECT            = config['Names']['dot_object'] + INT_BLENDER_COUNTER
+VR_DOT_MESH              = config['Names']['dot_mesh'] + INT_BLENDER_COUNTER
+VR_MATERIAL_GEOMETRY     = config['Names']['material_geometry']
+VR_MATERIAL_WIRE         = config['Names']['material_wire']
+VR_MATERIAL_DOT          = config['Names']['material_dot']
+VR_FINGER_OBJECT         = config['Names']['finger_object']
+VR_FINGER_MESH           = config['Names']['finger_mesh']
+VR_DISTORTION_SHADER     = config['Scripts']['distortion_shader']
+VR_GAME_LOGIC            = config['Scripts']['game_logic']
+VR_FONT_PATH             = '//' + join(*eval(config['Fonts']['path']))
+VR_FONT_EXTENSION        = '.'  + config['Fonts']['extension']
+VR_FONT_REGULAR_FILE     = config['Fonts']['regular']
+VR_FONT_BOLD_FILE        = config['Fonts']['bold']
+VR_FONT_ITALIC_FILE      = config['Fonts']['italic']
+VR_FONT_BOLD_ITALIC_FILE = config['Fonts']['bold_italic']
+VR_VAR_TEXT_TIMER        = config['Scripts']['var_text_time']
 
 
 #------------------------------------------------------------------------------#
@@ -115,36 +132,93 @@ VR_GAME_LOGIC           = config['Scripts']['game_logic']
 VAR_SCREEN_WIDTH  = 'screen_width'
 VAR_SCREEN_HEIGHT = 'screen_height'
 
-
 #------------------------------------------------------------------------------#
 # Reset cursor location
 bpy.context.scene.cursor_location = 0, 0, 0
 
+# Import fonts
+
 # Create new scene, object and mesh
-scene       = bpy.data.scenes.new(VR_SCENE)
-camera      = bpy.data.cameras.new(VR_CAMERA_DATA)
-text        = bpy.data.curves.new(VR_TEXT_DATA, 'FONT')
-mesh        = bpy.data.meshes.new(VR_GEOMETRY_MESH)
-armature    = bpy.data.armatures.new(VR_ARMATURE_ARMATURE)
-world       = bpy.data.worlds.new(VR_WORLD)
-lamp_1      = bpy.data.lamps.new(VR_LAMP_TOP, 'SPOT')
-lamp_2      = bpy.data.lamps.new(VR_LAMP_BOTTOM, 'SPOT')
-fng_mesh    = bpy.data.meshes.new(VR_FINGER_MESH)
-lmp_object1 = bpy.data.objects.new(VR_LAMP_TOP, lamp_1)
-lmp_object2 = bpy.data.objects.new(VR_LAMP_BOTTOM, lamp_2)
-log_object  = bpy.data.objects.new(VR_LOGIC_OBJECT, None)
-cam_object  = bpy.data.objects.new(VR_CAMERA_OBJECT, camera)
-txt_object  = bpy.data.objects.new(VR_TEXT_OBJECT, text)
-geo_object  = bpy.data.objects.new(VR_GEOMETRY_OBJECT, mesh)
-ctl_object  = bpy.data.objects.new(VR_ARMATURE_CONTROL, None)
-arm_object  = bpy.data.objects.new(VR_ARMATURE_OBJECT, armature)
-fng_object  = bpy.data.objects.new(VR_FINGER_OBJECT, fng_mesh)
+scene          = bpy.data.scenes.new(VR_SCENE)
+hud_scene      = bpy.data.scenes.new(VR_HUD_SCENE)
+camera         = bpy.data.cameras.new(VR_CAMERA_DATA)
+hud_camera     = bpy.data.cameras.new(VR_CAMERA_HUD_DATA)
+text_1st       = bpy.data.curves.new(VR_TEXT_FIRST_DATA, 'FONT')
+text_nth       = bpy.data.curves.new(VR_TEXT_OTHER_DATA, 'FONT')
+mesh           = bpy.data.meshes.new(VR_GEOMETRY_MESH)
+armature       = bpy.data.armatures.new(VR_ARMATURE_ARMATURE)
+world          = bpy.data.worlds.new(VR_WORLD)
+lamp_1         = bpy.data.lamps.new(VR_LAMP_TOP, 'SPOT')
+lamp_2         = bpy.data.lamps.new(VR_LAMP_BOTTOM, 'SPOT')
+fng_mesh       = bpy.data.meshes.new(VR_FINGER_MESH)
+lmp_object1    = bpy.data.objects.new(VR_LAMP_TOP, lamp_1)
+lmp_object2    = bpy.data.objects.new(VR_LAMP_BOTTOM, lamp_2)
+log_object     = bpy.data.objects.new(VR_LOGIC_OBJECT, None)
+cam_object     = bpy.data.objects.new(VR_CAMERA_OBJECT, camera)
+cam_hud_object = bpy.data.objects.new(VR_CAMERA_HUD_OBJECT, hud_camera)
+txt_1st_object = bpy.data.objects.new(VR_TEXT_FIRST_OBJECT, text_1st)
+txt_nth_object = bpy.data.objects.new(VR_TEXT_OTHER_OBJECT, text_nth)
+geo_object     = bpy.data.objects.new(VR_GEOMETRY_OBJECT, mesh)
+ctl_object     = bpy.data.objects.new(VR_ARMATURE_CONTROL, None)
+arm_object     = bpy.data.objects.new(VR_ARMATURE_OBJECT, armature)
+fng_object     = bpy.data.objects.new(VR_FINGER_OBJECT, fng_mesh)
+
+# Import and set fonts
+for font_name, property in ((VR_FONT_REGULAR_FILE    , 'font'),
+                            (VR_FONT_BOLD_FILE       , 'font_bold'),
+                            (VR_FONT_ITALIC_FILE     , 'font_italic'),
+                            (VR_FONT_BOLD_ITALIC_FILE, 'font_bold_italic')):
+    bpy.ops.font.open(filepath=join(VR_FONT_PATH, font_name + VR_FONT_EXTENSION),
+                      relative_path=True)
+    setattr(text_1st, property, bpy.data.fonts[font_name])
+    setattr(text_nth, property, bpy.data.fonts[font_name])
+
+# Set context and toggle to camera view
+bpy.context.screen.scene = hud_scene
+for area in bpy.context.screen.areas:
+    if area.type == 'VIEW_3D':
+        area.spaces[0].region_3d.view_perspective = 'CAMERA'
+
+# Bind objects to the hud-scene
+hud_scene.objects.link(cam_hud_object)
+hud_scene.objects.link(txt_1st_object)
+hud_scene.objects.link(txt_nth_object)
+
+# Set hud-scene's objects
+hud_scene.render.engine               = 'BLENDER_GAME'
+hud_scene.render.resolution_x         = int(VR_RESOLUTION_X/2)
+hud_scene.render.resolution_y         = VR_RESOLUTION_Y
+hud_scene.game_settings.material_mode = 'GLSL'
+hud_scene.game_settings.resolution_x  = VR_RESOLUTION_X
+hud_scene.game_settings.resolution_y  = VR_RESOLUTION_Y
+hud_scene.game_settings.samples       = 'SAMPLES_8'
+hud_camera.type                       = 'ORTHO'
+cam_hud_object.location               = 0, -10, 0
+cam_hud_object.rotation_mode          = 'XYZ'
+cam_hud_object.rotation_euler         = radians(90), 0, 0
+text_1st.body  = text_nth.body        = ''
+text_1st.align = text_nth.align       = 'LEFT'
+text_1st.size  = text_nth.size        = 0.2
+txt_1st_object.location               = -2, 0, 0
+txt_1st_object.rotation_mode          = 'XYZ'
+txt_1st_object.rotation_euler         = radians(90), 0, 0
+txt_nth_object.location               = -2, 0, -0.2
+txt_nth_object.rotation_mode          = 'XYZ'
+txt_nth_object.rotation_euler         = radians(90), 0, 0
+# Because text does not support materials in BGE
+txt_1st_object.color                  = VR_TEXT_FIRST_COLOR + (VR_TEXT_FIRST_ALPHA,)
+txt_nth_object.color                  = VR_TEXT_OTHER_COLOR + (VR_TEXT_OTHER_ALPHA,)
+
+# Set context and toggle
+bpy.context.screen.scene = scene
+for area in bpy.context.screen.areas:
+    if area.type == 'VIEW_3D':
+        area.spaces[0].region_3d.view_perspective = 'CAMERA'
 
 # Bind objects to the scene
 scene.world = world
 scene.objects.link(log_object)
 scene.objects.link(cam_object)
-scene.objects.link(txt_object)
 scene.objects.link(lmp_object1)
 scene.objects.link(lmp_object2)
 scene.objects.link(geo_object)
@@ -152,9 +226,10 @@ scene.objects.link(ctl_object)
 scene.objects.link(arm_object)
 scene.objects.link(fng_object)
 
-# Make scene active
-bpy.context.screen.scene            = scene
+# Set scene properties
 scene.render.engine                 = 'BLENDER_GAME'
+scene.render.resolution_x           = int(VR_RESOLUTION_X/2)
+scene.render.resolution_y           = VR_RESOLUTION_Y
 scene.game_settings.material_mode   = 'GLSL'
 scene.game_settings.show_mouse      = True
 scene.game_settings.stereo          = 'STEREO'
@@ -163,8 +238,6 @@ scene.game_settings.frequency       = VR_REFRESH_RATE
 scene.game_settings.samples         = 'SAMPLES_8'
 scene.game_settings.resolution_x    = VR_RESOLUTION_X
 scene.game_settings.resolution_y    = VR_RESOLUTION_Y
-scene.render.resolution_x           = int(VR_RESOLUTION_X / 2)
-scene.render.resolution_y           = VR_RESOLUTION_Y
 scene.game_settings.exit_key        = 'NONE'
 scene.game_settings.physics_engine  = 'NONE'
 scene.game_settings.show_fullscreen = False
@@ -182,13 +255,6 @@ cam_object.rotation_euler = radians(66), 0, 0
 camera.lens               = 20
 camera.clip_start         = 0.1
 camera.clip_end           = 100
-
-# Set text object
-text.body           = 'Sample'
-text.align          = 'FLUSH'
-text.size           = 0.1
-txt_object.parent   = cam_object
-txt_object.location = -0.5, 0, -0.6
 
 # Set lamps
 # TODO: figure out how to set values, when falloff_type='CUSTOM_CURVE'
@@ -297,14 +363,15 @@ bpy.context.scene.objects.active = arm_object
 
 # Create dot material
 dot_material = bpy.data.materials.new(VR_MATERIAL_GEOMETRY)
-dot_material.diffuse_color       = VR_DOT_COLOR
-dot_material.use_shadeless       = True
-material.use_raytrace            = False
-material.use_mist                = True
-material.use_full_oversampling   = True
-material.game_settings.physics   = False
-material.use_cast_shadows        = True
-material.use_cast_buffer_shadows = True
+dot_material.diffuse_color           = VR_DOT_COLOR
+dot_material.use_shadeless           = True
+dot_material.use_raytrace            = False
+dot_material.use_mist                = True
+dot_material.use_full_oversampling   = True
+dot_material.game_settings.physics   = False
+dot_material.use_cast_shadows        = True
+dot_material.use_cast_buffer_shadows = True
+dot_material.use_object_color        = True
 
 # Add constraints to bones
 for i, bone in enumerate(arm_object.pose.bones):
@@ -397,5 +464,7 @@ and_controller.link(actuator=filter_actuator)
 # Add properties
 bpy.ops.object.game_property_new(type='FLOAT', name=VAR_SCREEN_WIDTH)
 bpy.ops.object.game_property_new(type='FLOAT', name=VAR_SCREEN_HEIGHT)
+bpy.ops.object.game_property_new(type='TIMER', name=VR_VAR_TEXT_TIMER)
 log_object.game.properties[VAR_SCREEN_WIDTH].value  = VR_RESOLUTION_X
 log_object.game.properties[VAR_SCREEN_HEIGHT].value = VR_RESOLUTION_Y
+log_object.game.properties[VR_VAR_TEXT_TIMER].value = 0.0

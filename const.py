@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.1.9.869 (20150507)                        ##
+##                       Version: 0.2.0.924 (20150509)                        ##
 ##                               File: const.py                               ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -42,6 +42,7 @@ with open('config.ini', encoding='utf-8') as file:
 # Internal details
 INT_BLENDER_COUNTER      = config['Internal']['blender_counter']
 INT_OUTPUT_FILE          = config['Internal']['output_file']
+INT_TEXT_INTERVAL        = float(config['Internal']['message_interval'])
 
 # Application constants
 APP_RUNNING              =  0
@@ -53,7 +54,12 @@ OBJ_PROTOTYPE_SURFACE    = config['Names']['armature_object']
 OBJ_PROTOTYPE_VERTEX_ALL = config['Names']['armature_control']
 OBJ_GLOBAL               = config['Names']['logic']
 OBJ_DOT                  = config['Names']['dot_object'] + INT_BLENDER_COUNTER
-OBJ_TEXT                 = config['Names']['text_object']
+OBJ_TEXT_FIRST           = config['Names']['text_first_object']
+OBJ_TEXT_OTHER           = config['Names']['text_other_object']
+OBJ_HUD_SCENE            = config['Names']['hud_scene']
+
+# Blender properties
+PROP_TEXT_TIMER          = config['Scripts']['var_text_time']
 
 # Communication settings
 COMM_IS_PAIRED           = bool(eval(config['Communication']['paired']))

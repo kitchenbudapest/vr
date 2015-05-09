@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.1.9.872 (20150507)                        ##
+##                       Version: 0.2.0.937 (20150509)                        ##
 ##                                 File: TODO                                 ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -67,6 +67,13 @@ TODO:
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 6
+  - file: hand.py
+    line: 162
+    note: |
+          implement excepttion
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 7
   - file: surface.py
     line: 78
     note: |
@@ -74,44 +81,37 @@ TODO:
           most probably not => update all the function definition's return signatures
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 7
-  - file: hand.py
-    line: 162
-    note: |
-          implement excepttion
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 8
-  - file: generator.py
-    line: 194
-    note: |
-          figure out how to set values, when falloff_type='CUSTOM_CURVE'
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 9
-  - file: generator.py
-    line: 250
-    note: |
-          it is very likely that the vertices list is not needed!
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 10
   - file: main.py
-    line: 369
+    line: 448
     note: |
           while pinching, make other fingers hidden
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 11
+  # 9
   - file: main.py
-    line: 402
+    line: 481
     note: |
           calculate the midpoint between index and thumb
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 10
+  - file: generator.py
+    line: 260
+    note: |
+          figure out how to set values, when falloff_type='CUSTOM_CURVE'
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 11
+  - file: generator.py
+    line: 316
+    note: |
+          it is very likely that the vertices list is not needed!
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 12
   - file: app.py
-    line: 89
+    line: 94
     note: |
           make build-script work :)
           Import cutils modules => versioning
@@ -120,7 +120,7 @@ TODO:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 13
   - file: app.py
-    line: 196
+    line: 204
     note: |
           fake casted shadow with negative lamp:
           https://www.youtube.com/watch?v=iJUlqwKEdVQ
@@ -128,21 +128,21 @@ TODO:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 14
   - file: app.py
-    line: 256
+    line: 287
     note: |
           do I still need to set the states of these?
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 15
   - file: app.py
-    line: 262
+    line: 293
     note: |
           positioner(*finger.tip_position) => leaking memory and never returns
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 16
   - file: app.py
-    line: 273
+    line: 304
     note: |
           use `leap_frame.images` as background
 
@@ -178,7 +178,7 @@ BUG:
 
 
 
-#----------------------------- 4 POSTS IN 2 FILES -----------------------------#
+#----------------------------- 5 POSTS IN 2 FILES -----------------------------#
 HACK:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 1
@@ -192,7 +192,7 @@ HACK:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 2
   - file: app.py
-    line: 138
+    line: 148
     note: |
           There is no 'NONE_KEY' defined, so setting the escape key to 0
           could cause undefined behaviour, as it is undocomunted. During
@@ -202,7 +202,7 @@ HACK:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 3
   - file: app.py
-    line: 188
+    line: 196
     note: |
           Surface arguments should be protoype_creator methods, instead of
           actual objects, but right now, prototyping the surface object
@@ -212,9 +212,16 @@ HACK:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 4
   - file: app.py
-    line: 199
+    line: 207
     note: |
           yuck.. this is getting out of hands now :(:(:(
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 5
+  - file: app.py
+    line: 223
+    note: |
+          The ugliest hack I've ever done...
 
 
 
@@ -231,7 +238,7 @@ NOTE:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 2
   - file: app.py
-    line: 116
+    line: 121
     note: |
           local->global: http://blenderartists.org/forum/archive/index.php/t-180690.html
 

@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.1.8.830 (20150506)                        ##
+##                       Version: 0.1.9.877 (20150508)                        ##
 ##                              File: surface.py                              ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -87,6 +87,27 @@ class Surface:
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def serialise(self) -> 'list':
+        coords = []
+        vertices_children = self._vertices.children
+        try:
+            for i in count():
+                coords.extend(vertices_children[name_of_vertex(i)].localPosition)
+        except KeyError:
+            return coords
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def deserialise(self, coords):
+        vertices_children = self._vertices.children
+        try:
+            for i, coord in enumerate(zip(*(iter(coords),)*3)):
+                vertices_children[name_of_vertex(i)].localPosition = coord
+        except KeyError:
+            raise SerialisedDataUnmatched
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def update(self):
         self._surface.update()
 
@@ -94,6 +115,11 @@ class Surface:
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def selected(self) -> 'tuples of index and KX_VertexProxy pair':
         yield from self._selected.items()
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def is_selected(self, identifier: 'index or name') -> 'boolean':
+        return identifier in self._selected
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
@@ -117,6 +143,11 @@ class Surface:
         selected = tuple(self._selected.values())
         self._selected = {}
         return selected
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def is_locked(self, identifier: 'index or name') -> 'boolean':
+        return identifier in self._locked
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
@@ -144,21 +175,12 @@ class Surface:
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def serialise(self) -> 'list':
-        coords = []
-        vertices_children = self._vertices.children
-        try:
-            for i in count():
-                coords.extend(vertices_children[name_of_vertex(i)].localPosition)
-        except KeyError:
-            return coords
-
-
-    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def deserialise(self, coords):
-        vertices_children = self._vertices.children
-        try:
-            for i, coord in enumerate(zip(*(iter(coords),)*3)):
-                vertices_children[name_of_vertex(i)].localPosition = coord
-        except KeyError:
-            raise SerialisedDataUnmatched
+    def move_vertices(self, identifiers, move_vector):
+        error = None
+        for identifier in identifiers:
+            if identifier in self._locked:
+                error = VertexLocked('Some vertices are locked')
+            else:
+                vertex.applyMovement(vector)
+        if error:
+            raise error

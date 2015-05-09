@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.1.9.869 (20150507)                        ##
+##                       Version: 0.2.0.906 (20150509)                        ##
 ##                               File: main.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -129,12 +129,17 @@ class KibuVR(Application):
 
         # Create undo stack
         # self._action = None
-        self._history = History()
+        @History.event
+        def history_is_empty(direction, prefix):
+            self.text.write('{PREFIX}History is empty'.format(PREFIX=prefix))
+        self._history = History(history_is_empty)
 
         # Set initial states
         self._is_picked        = False
         self._is_dual_grabbed  = False
         self._grab_position    = None
+        self._grab_start       = None
+        self._grab_stop        = None
         self._dual_grab_vector = None
         self._dual_grab_length = None
 
@@ -193,6 +198,9 @@ class KibuVR(Application):
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def on_circle(self, states):
+        # If a grabbing or picking is going on
+        #if not states['grabbed']:
+        #    print('fuck')
         if states['circle_cw']:
             self._history.undo()
         elif states['circle_ccw']:
@@ -266,6 +274,35 @@ class KibuVR(Application):
             self._is_dual_grabbed  = True
             print('[ ROTATING ]')
         except ValueError:
+
+
+            #vertices = tuple(self.surface.selected())
+            #start = self._grab_start
+            #stop  = self._grab_stop
+            #movement = Vec3.from_line(start[0], start[1], start[2],
+            #                          stop[0],  stop[1],  stop[2])
+            ## Create events
+            #@History.event
+            #def move_vertices(direction, prefix):
+            #    surface = self.surface
+            #    # Move all selected vertices
+            #    for vertex in vertices:
+            #        # If opponent user is not using them
+            #        if not surface.is_locked(vertex.name)
+            #            vertex.applyMovement(movement)
+            #    # Update geometry
+            #    surface.update()
+            #    self.text = '{PREFIX}Vertices moved to position'.format(PREFIX=prefix)
+
+            #movement *= -1
+            #@History.event
+            #def move_back_vertices(direction, prefix):
+            #    pass
+
+            #self._history.push(undo=move_back_vertices,
+            #                   redo=move_vertices)
+
+
             # If only one hand is grabbing
             try:
                 curr = tuple(grabbing[0].thumb.position)
@@ -297,7 +334,7 @@ class KibuVR(Application):
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def on_pick(self, states):
-        # IF there is a grabbing going on
+        # If there is a grabbing going on
         if (states['grabbed'] or
             states['circle_cw'] or
             states['circle_ccw']):
@@ -323,32 +360,74 @@ class KibuVR(Application):
                         return
 
                     # Create events
-                    def deselect_vertex():
-                        surface.deselect(vertex.name)
-                        vertex.color = COLOR_GEOMETRY_BASE
+                    @History.event
+                    def deselect_vertex(direction, prefix):
+                        print('deselect: dir =', direction, 'pref =', prefix)
+                        index = index_of_vertex(vertex.name)
+                        # If the opponent user is not grabbing the vertex already
+                        try:
+                            surface.deselect(vertex.name)
+                            vertex.color = COLOR_GEOMETRY_DARK
+                            self.text.write(
+                                '{PREFIX}Vertex #{INDEX} deselected'.format(
+                                    PREFIX = prefix,
+                                    INDEX  = index))
+                        # If the opponent user is grabbing the vertex
+                        except VertexLocked:
+                            self.text.write(
+                                '{PREFIX}Vertex #{INDEX} is locked'.format(
+                                    PREFIX = prefix,
+                                    INDEX  = index))
+                        # If vertex is already selected
+                        except VertexAlreadySelected:
+                            # If first call
+                            if direction == History.NONE:
+                                raise VertexAlreadySelected
+                            # If unod or redo
+                            self.text.write(
+                                '{PREFIX}Vertex #{INDEX} deselected'.format(
+                                    PREFIX = prefix,
+                                    INDEX  = index))
 
-                    def select_vertex():
+                    @History.event
+                    def select_vertex(direction, prefix):
+                        print('select: dir =', direction, 'pref =', prefix)
+                        index = index_of_vertex(vertex.name)
+                        # If the opponent user is not grabbing the vertex already
                         try:
                             surface.select(vertex.name)
+                            vertex.color = COLOR_GEOMETRY_LITE
+                            self.text.write(
+                                '{PREFIX}Vertex #{INDEX} selected'.format(
+                                    PREFIX = prefix,
+                                    INDEX  = index))
+                        # If the opponent user is grabbing the vertex
                         except VertexLocked:
-                            return
-                        vertex.color = COLOR_GEOMETRY_LITE
+                            self.text.write(
+                                '{PREFIX}Vertex #{INDEX} is locked'.format(
+                                    PREFIX = prefix,
+                                    INDEX  = index))
+                        # If vertex is already selected
+                        except VertexAlreadySelected:
+                            # If first call
+                            if direction == History.NONE:
+                                raise VertexAlreadySelected
+                            # If unod or redo
+                            self.text.write(
+                                '{PREFIX}Vertex #{INDEX} selected'.format(
+                                    PREFIX = prefix,
+                                    INDEX  = index))
 
                     # Try to select vertex
                     try:
+                        select_vertex(History.NONE, History.NONE_PREFIX)
                         self._history.push(undo=deselect_vertex,
                                            redo=select_vertex)
-                        select_vertex()
-                        print('[ SELECTED ] vertex:', vertex.name)
-                    # If vertex has been selected by the opponent user
-                    except VertexLocked:
-                        return
+                    # If vertex has already been selected
                     except VertexAlreadySelected:
-                        # If user already released the previous pick
+                        deselect_vertex(History.NONE, History.NONE_PREFIX)
                         self._history.push(undo=select_vertex,
                                            redo=deselect_vertex)
-                        deselect_vertex()
-                        print('[DESELECTED] vertex:', vertex.name)
                     # Set state
                     self._is_picked = True
                     # Feedback the user about the pick's state
