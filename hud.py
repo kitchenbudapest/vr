@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.2.0.929 (20150509)                        ##
+##                       Version: 0.2.0.938 (20150509)                        ##
 ##                                File: hud.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -38,45 +38,47 @@ class Text:
                        text_other_object,
                        time_getter,
                        interval):
-        self._text_first = text_first_object
-        self._text_other = text_other_object
-        self._get_time   = time_getter
-        self._interval   = interval
-        self._messages   = deque()
-        self._updated    = False
-        self._empty      = True
+        self._text_first  = text_first_object
+        self._text_other  = text_other_object
+        self._get_time    = time_getter
+        self._interval    = interval
+        self._last_time   = time_getter()
+        self._messages    = deque()
+        self._still_empty = True
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def _update(self):
+        # Write the changed and constructed messages to display
+        messages = iter(self._messages)
+        try:
+            self._text_first.text = next(messages)
+            self._text_other.text = '\n'.join(messages)
+        except StopIteration:
+            self._text_first.text = self._text_other.text = ''
+        # Update timer
+        self._last_time = self._get_time()
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def update(self):
-        # If there are messages in the deque
-        try:
-            # If last message's time-stamp is older than current time
-            if (self._messages[-1][0] + self._interval) <= self._get_time():
-                # Remove oldest message and switch the updated-flag
+        # If there are any messages left
+        if len(self._messages):
+            # If interval passed
+            if (self._last_time + self._interval) <= self._get_time():
+                # Remove oldest item
                 self._messages.pop()
-                self._udpated = True
-        # If there is no message left in the deque
-        except IndexError:
-            if not self._empty:
-                self._updated = True
-                self._empty   = True
-
-        # If messages were added or removed
-        if self._updated:
-            # Write the changed and constructed messages to display
-            messages = iter(m for _, m in self._messages)
-            try:
-                self._text_first.text = next(messages)
-                self._text_other.text = '\n'.join(messages)
-            except StopIteration:
-                self._text_first.text = self._text_other.text = ''
-            self._updated = False
+                # Update display
+                self._update()
+        # If deque just become empty
+        elif not self._still_empty:
+            # Switch state flag and update display
+            self._still_empty = True
+            self._update()
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def write(self, message):
-        # Add new message and switch the updated-flag
-        self._messages.appendleft((self._get_time(), message))
-        self._updated = True
-        self._empty   = False
+        # Add new message and update display
+        self._messages.appendleft(message)
+        self._update()
