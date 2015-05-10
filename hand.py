@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.1.8.841 (20150506)                        ##
+##                       Version: 0.2.1.002 (20150510)                        ##
 ##                               File: hand.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -140,6 +140,10 @@ class Hand(CallbackManager):
 
             # Store fingers to be accessible via leap-types
             fingers[details['leap_type']] = object
+
+        # HACK:
+        self.ring._object.setVisible(False, True)
+        self.pinky._object.setVisible(False, True)
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #

@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.2.0.938 (20150509)                        ##
+##                       Version: 0.2.0.980 (20150510)                        ##
 ##                                File: hud.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -59,6 +59,11 @@ class Text:
         # Update timer
         self._last_time = self._get_time()
 
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def clear(self):
+        self._messages = deque()
+        self._update()
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def update(self):

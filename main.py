@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.2.0.906 (20150509)                        ##
+##                       Version: 0.2.0.998 (20150510)                        ##
 ##                               File: main.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -73,6 +73,8 @@ PICK_HOLD_DISTANCE    = 3.5
 PICK_RELEASE_DISTANCE = 2.5
 #GRAB_HOLD_DISTANCE    = 3.5
 GRAB_RELEASE_DISTANCE = 3.5
+SWIPE_DISTANCE        = 135
+SWIPE_DEVIANCE        =  20
 
 ZOOM_SCALE_FACTOR     = 0.1
 ROTATE_SCALE_FACTOR   = 0.1
@@ -150,10 +152,14 @@ class KibuVR(Application):
 
         # Set actual callbacks
         self.hands.append_callback('grab', self.on_grab)
-        self.hands.left.append_callback('circle', self.on_circle)
-        self.hands.right.append_callback('circle', self.on_circle)
         self.hands.left.append_callback('pick', self.on_pick)
         self.hands.right.append_callback('pick', self.on_pick)
+        self.hands.left.append_callback('swipe_left_right', self.on_swipe_left_right)
+        self.hands.right.append_callback('swipe_left_right', self.on_swipe_left_right)
+        self.hands.left.append_callback('swipe_up_down', self.on_swipe_up_down)
+        self.hands.right.append_callback('swipe_up_down', self.on_swipe_up_down)
+        self.hands.left.append_callback('swipe_front_back', self.on_swipe_front_back)
+        self.hands.right.append_callback('swipe_front_back', self.on_swipe_front_back)
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
@@ -197,21 +203,138 @@ class KibuVR(Application):
                 raise RestartApplication
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def on_circle(self, states):
-        # If a grabbing or picking is going on
-        #if not states['grabbed']:
-        #    print('fuck')
-        if states['circle_cw']:
-            self._history.undo()
-        elif states['circle_ccw']:
-            self._history.redo()
+    def on_swipe_left_right(self, states):
+        if states['grabbed']:
+            return
+        # Get current position of hand
+        position = states['leap_hand'].palm_position
+        x1, y1, z1 = position[0], position[1], position[2]
+        # If this is not the first cycle of a swipe-measurement
+        try:
+            # Get stored values
+            x0, y0, z0 = states['swipe_left_right_start']
+            last_x     = states['swipe_left_right_last_x']
+            # Get deltas between start and current
+            # and previous and current
+            dx0 = x0 - x1
+            dx1 = last_x - x1
+
+            # If the next move is "violating" the deviance or
+            # hand is not moving to the same direction
+            if (abs(y0 - y1) > SWIPE_DEVIANCE or
+                abs(z0 - z1) > SWIPE_DEVIANCE or
+                ((dx0 > 0  and dx1 <= 0) or
+                 (dx0 <= 0 and dx1 >  0))):
+                    raise KeyError
+
+            # If this is the end of a swipe
+            if (abs(dx0) >= SWIPE_DISTANCE):
+                # Moved left
+                if dx0 > 0:
+                    self._history.undo()
+                # Moved right
+                else:
+                    self._history.redo()
+                raise KeyError
+
+        # If this is the first cycle of a swipe-measurement
+        except KeyError:
+            # Start a new swipe-measuring cycle
+            states['swipe_left_right_start']  = x1, y1, z1
+            states['swipe_left_right_last_x'] = x1
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def on_swipe_front_back(self, states):
+        if states['grabbed']:
+            return
+        # Get current position of hand
+        position = states['leap_hand'].palm_position
+        x1, y1, z1 = position[0], position[1], position[2]
+        # If this is not the first cycle of a swipe-measurement
+        try:
+            # Get stored values
+            x0, y0, z0 = states['swipe_front_back_start']
+            last_z     = states['swipe_front_back_last_z']
+            # Get deltas between start and current
+            # and previous and current
+            dz0 = z0 - z1
+            dz1 = last_z - z1
+
+            # If the next move is "violating" the deviance or
+            # hand is not moving to the same direction
+            if (abs(x0 - x1) > SWIPE_DEVIANCE or
+                abs(y0 - y1) > SWIPE_DEVIANCE or
+                ((dz0 > 0  and dz1 <= 0) or
+                 (dz0 <= 0 and dz1 >  0))):
+                    raise KeyError
+
+            # If this is the end of a swipe
+            if (abs(dz0) >= SWIPE_DISTANCE):
+                # Moved forward
+                if dz0 > 0:
+                    print('[MOVE] forward')
+                # Moved backward
+                else:
+                    #pritn('[MOVE] backward')
+                    self.text.clear()
+                    self.text.write('Cleared messages')
+                raise KeyError
+
+        # If this is the first cycle of a swipe-measurement
+        except KeyError:
+            # Start a new swipe-measuring cycle
+            states['swipe_front_back_start']  = x1, y1, z1
+            states['swipe_front_back_last_z'] = z1
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def on_swipe_up_down(self, states):
+        if states['grabbed']:
+            return
+        # Get current position of hand
+        position = states['leap_hand'].palm_position
+        x1, y1, z1 = position[0], position[1], position[2]
+        # If this is not the first cycle of a swipe-measurement
+        try:
+            # Get stored values
+            x0, y0, z0 = states['swipe_up_down_start']
+            last_y     = states['swipe_up_down_last_y']
+            # Get deltas between start and current
+            # and previous and current
+            dy0 = y0 - y1
+            dy1 = last_y - y1
+
+            # If the next move is "violating" the deviance or
+            # hand is not moving to the same direction
+            if (abs(x0 - x1) > SWIPE_DEVIANCE or
+                abs(z0 - z1) > SWIPE_DEVIANCE or
+                ((dy0 > 0  and dy1 <= 0) or
+                 (dy0 <= 0 and dy1 >  0))):
+                    raise KeyError
+
+            # If this is the end of a swipe
+            if (abs(dy0) >= SWIPE_DISTANCE):
+                # Moved down
+                if dy0 > 0:
+                    print('[MOVE] down')
+                # Moved up
+                else:
+                    for vertex in self.surface.deselect_all():
+                        vertex.color = COLOR_GEOMETRY_DARK
+                    self.text.write('Deselect all vertices')
+                    #print('[MOVE] up')
+                raise KeyError
+
+        # If this is the first cycle of a swipe-measurement
+        except KeyError:
+            # Start a new swipe-measuring cycle
+            states['swipe_up_down_start']  = x1, y1, z1
+            states['swipe_up_down_last_y'] = y1
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def on_grab(self, states):
-        if (states['circle_cw'] or
-            states['circle_ccw']):
-            return
         grabbing = []
         # Check both hands
         for hand in self.hands:
@@ -307,6 +430,9 @@ class KibuVR(Application):
             try:
                 curr = tuple(grabbing[0].thumb.position)
                 prev = self._grab_position
+                # If there is a single grab going on
+                if self._is_dual_grabbed:
+                    return
                 # If this grab is part of a previous grab-cycle
                 try:
                     # Calculate vector between previous
@@ -323,7 +449,6 @@ class KibuVR(Application):
                     pass
                 # Store current position as previous one for the next cycle
                 self._grab_position = curr
-                print('[ GRABBING ]')
             # If none of the hands are grabbing
             except IndexError:
                 self._grab_position    = \
@@ -335,9 +460,7 @@ class KibuVR(Application):
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def on_pick(self, states):
         # If there is a grabbing going on
-        if (states['grabbed'] or
-            states['circle_cw'] or
-            states['circle_ccw']):
+        if states['grabbed']:
             return
         # Get local reference of this hand
         hand = states['hand']
@@ -362,36 +485,19 @@ class KibuVR(Application):
                     # Create events
                     @History.event
                     def deselect_vertex(direction, prefix):
-                        print('deselect: dir =', direction, 'pref =', prefix)
                         index = index_of_vertex(vertex.name)
-                        # If the opponent user is not grabbing the vertex already
                         try:
                             surface.deselect(vertex.name)
                             vertex.color = COLOR_GEOMETRY_DARK
-                            self.text.write(
-                                '{PREFIX}Vertex #{INDEX} deselected'.format(
-                                    PREFIX = prefix,
-                                    INDEX  = index))
-                        # If the opponent user is grabbing the vertex
                         except VertexLocked:
-                            self.text.write(
-                                '{PREFIX}Vertex #{INDEX} is locked'.format(
-                                    PREFIX = prefix,
-                                    INDEX  = index))
-                        # If vertex is already selected
-                        except VertexAlreadySelected:
-                            # If first call
-                            if direction == History.NONE:
-                                raise VertexAlreadySelected
-                            # If unod or redo
-                            self.text.write(
-                                '{PREFIX}Vertex #{INDEX} deselected'.format(
-                                    PREFIX = prefix,
-                                    INDEX  = index))
+                            pass
+                        self.text.write(
+                            '{PREFIX}Vertex #{INDEX} deselected'.format(
+                                PREFIX = prefix,
+                                INDEX  = index))
 
                     @History.event
                     def select_vertex(direction, prefix):
-                        print('select: dir =', direction, 'pref =', prefix)
                         index = index_of_vertex(vertex.name)
                         # If the opponent user is not grabbing the vertex already
                         try:

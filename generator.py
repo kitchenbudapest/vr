@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.2.0.924 (20150509)                        ##
+##                       Version: 0.2.0.973 (20150510)                        ##
 ##                             File: generator.py                             ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -99,6 +99,8 @@ VR_TEXT_FIRST_OBJECT     = config['Names']['text_first_object']
 VR_TEXT_FIRST_DATA       = config['Names']['text_first_data']
 VR_TEXT_OTHER_OBJECT     = config['Names']['text_other_object']
 VR_TEXT_OTHER_DATA       = config['Names']['text_other_data']
+VR_MIST_START            = float(config['World']['mist_falloff_start'])
+VR_MIST_DEPTH            = float(config['World']['mist_falloff_depth'])
 VR_LAMP_TOP              = config['Names']['lamp_top']
 VR_LAMP_BOTTOM           = config['Names']['lamp_bottom']
 VR_LAMP_TOP_OBJECT       = config['Names']['lamp_top_object']
@@ -246,7 +248,8 @@ scene.game_settings.raster_storage  = 'VERTEX_ARRAY'
 # Set world properties
 world.horizon_color          = VR_WORLD_COLOR
 world.mist_settings.use_mist = True
-
+world.mist_settings.start    = VR_MIST_START
+world.mist_settings.depth    = VR_MIST_DEPTH
 
 # Set camera
 cam_object.location       = 0, -20, 8

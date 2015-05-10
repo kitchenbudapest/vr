@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.2.0.924 (20150509)                        ##
+##                       Version: 0.2.1.002 (20150510)                        ##
 ##                                File: app.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -104,6 +104,7 @@ MOUNTED_ON_DESK = 1
 # Local references of blender constants
 SPACE_KEY       = bge.events.SPACEKEY
 ESCAPE_KEY      = bge.events.ESCKEY
+BACK_SPACE_KEY  = bge.events.BACKSPACEKEY
 JUST_ACTIVATED  = bge.logic.KX_INPUT_JUST_ACTIVATED
 
 
@@ -171,12 +172,13 @@ class Application(CallbackManager):
 
         # Enable circle gesture
         leap_controller.enable_gesture(Leap.Gesture.TYPE_CIRCLE)
-        # Configure circle gesture
-        leap_controller.config.set("Gesture.Circle.MinRadius", 100.0)
-        leap_controller.config.set("Gesture.Circle.MinArc", radians(359))
+        ## Configure circle gesture
+        #leap_controller.config.set("Gesture.Circle.MinRadius", 100.0)
+        #leap_controller.config.set("Gesture.Circle.MinArc", radians(359))
+        ## Configure swipe gesture
         #leap_controller.config.set("Gesture.Swipe.MinLength", 200.0)
         #leap_controller.config.set("Gesture.Swipe.MinVelocity", 750)
-        leap_controller.config.save()
+        #leap_controller.config.save()
 
         # Create a reference to the blender scene
         self._blender_scene = blender_scene = bge.logic.getCurrentScene()
@@ -247,6 +249,8 @@ class Application(CallbackManager):
             self.set_states(escape=APP_ESCAPED)
         elif bge.logic.keyboard.events[SPACE_KEY] == JUST_ACTIVATED:
             self.set_states(restart=COMM_RESTART)
+        elif bge.logic.keyboard.events[BACK_SPACE_KEY] == JUST_ACTIVATED:
+            self._text.clear()
 
         # Get current values of oculus-rift
         rift_frame = self._rift_controller.frame()
@@ -254,9 +258,9 @@ class Application(CallbackManager):
         leap_frame = self._leap_controller.frame()
 
         # Set camera position and orientation
-        self._camera.worldPosition = rift_frame.position
-        self._camera.worldOrientation = \
-            RIFT_ORIENTATION_SHIFT*Quaternion(rift_frame.orientation)
+        #self._camera.worldPosition = rift_frame.position
+        #self._camera.worldOrientation = \
+        #    RIFT_ORIENTATION_SHIFT*Quaternion(rift_frame.orientation)
 
         # If leap was unable to get a proper frame
         if not leap_frame.is_valid:
@@ -270,24 +274,24 @@ class Application(CallbackManager):
         positioner = self._positioner
         try:
             self.execute_all_callbacks()
-            circle_cw = circle_ccw = False
-            for gesture in leap_frame.gestures():
-                if (gesture.type is Leap.Gesture.TYPE_CIRCLE and
-                    gesture.is_valid and
-                    gesture.state is Leap.Gesture.STATE_STOP):
-                        circle =  Leap.CircleGesture(gesture)
-                        if (circle.pointable.direction.angle_to(circle.normal) <= Leap.PI/2):
-                            circle_ccw=True
-                        else:
-                            circle_cw=True
-            self._hands.set_states(circle_cw=circle_cw,
-                                   circle_ccw=circle_ccw)
+            #circle_cw = circle_ccw = False
+            #for gesture in leap_frame.gestures():
+            #    if (gesture.type is Leap.Gesture.TYPE_CIRCLE and
+            #        gesture.is_valid and
+            #        gesture.state is Leap.Gesture.STATE_STOP):
+            #            circle =  Leap.CircleGesture(gesture)
+            #            if (circle.pointable.direction.angle_to(circle.normal) <= Leap.PI/2):
+            #                circle_ccw=True
+            #            else:
+            #                circle_cw=True
+            #self._hands.set_states(circle_cw=circle_cw,
+            #                       circle_ccw=circle_ccw)
             for leap_hand in leap_frame.hands:
                 hand = selector(leap_hand.is_right)
                 # TODO: do I still need to set the states of these?
                 hand.set_states(hand=hand,
-                                circle_cw=circle_cw,
-                                circle_ccw=circle_ccw,
+                                #circle_cw=circle_cw,
+                                #circle_ccw=circle_ccw,
                                 leap_hand=leap_hand)
                 for finger in leap_hand.fingers:
                     # TODO: positioner(*finger.tip_position) => leaking memory and never returns

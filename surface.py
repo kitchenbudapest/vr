@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.1.9.877 (20150508)                        ##
+##                       Version: 0.2.0.943 (20150510)                        ##
 ##                              File: surface.py                              ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -135,6 +135,8 @@ class Surface:
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def deselect(self, identifier: 'index or name') -> 'KX_VertexProxy':
+        if identifier in self._locked:
+            raise VertexLocked
         return self._selected.pop(identifier, None)
 
 
