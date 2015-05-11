@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.2.1.006 (20150510)                        ##
+##                       Version: 0.2.1.014 (20150511)                        ##
 ##                                 File: TODO                                 ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -120,7 +120,7 @@ TODO:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 13
   - file: app.py
-    line: 206
+    line: 209
     note: |
           fake casted shadow with negative lamp:
           https://www.youtube.com/watch?v=iJUlqwKEdVQ
@@ -128,21 +128,21 @@ TODO:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 14
   - file: app.py
-    line: 291
+    line: 294
     note: |
           do I still need to set the states of these?
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 15
   - file: app.py
-    line: 297
+    line: 300
     note: |
           positioner(*finger.tip_position) => leaking memory and never returns
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 16
   - file: app.py
-    line: 308
+    line: 311
     note: |
           use `leap_frame.images` as background
 
@@ -209,7 +209,7 @@ HACK:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 4
   - file: app.py
-    line: 198
+    line: 201
     note: |
           Surface arguments should be protoype_creator methods, instead of
           actual objects, but right now, prototyping the surface object
@@ -219,14 +219,14 @@ HACK:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 5
   - file: app.py
-    line: 209
+    line: 212
     note: |
           yuck.. this is getting out of hands now :(:(:(
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 6
   - file: app.py
-    line: 225
+    line: 228
     note: |
           The ugliest hack I've ever done...
 

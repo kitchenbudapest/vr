@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.2.1.002 (20150510)                        ##
+##                       Version: 0.2.1.007 (20150511)                        ##
 ##                                File: app.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -170,8 +170,11 @@ class Application(CallbackManager):
                                                      head_shift_y=RIFT_POSITION_SHIFT_Y,
                                                      head_shift_z=RIFT_POSITION_SHIFT_Z)
 
-        # Enable circle gesture
-        leap_controller.enable_gesture(Leap.Gesture.TYPE_CIRCLE)
+        # Enable HMD optimisation
+        if MOUNTED_ON_HEAD:
+            leap_controller.set_policy(Leap.Controller.POLICY_OPTIMIZE_HMD)
+        ## Enable circle gesture
+        #leap_controller.enable_gesture(Leap.Gesture.TYPE_CIRCLE)
         ## Configure circle gesture
         #leap_controller.config.set("Gesture.Circle.MinRadius", 100.0)
         #leap_controller.config.set("Gesture.Circle.MinArc", radians(359))
@@ -332,7 +335,7 @@ class Application(CallbackManager):
         # the indicator light is at the back
         return (position[0] *  LEAP_MULTIPLIER,
                 position[2] * -LEAP_MULTIPLIER,
-                position[1] *  LEAP_MULTIPLIER - 10)
+                position[1] *  LEAP_MULTIPLIER -10)#-25)
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
