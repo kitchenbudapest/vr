@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.2.0.924 (20150509)                        ##
+##                       Version: 0.2.1.015 (20150513)                        ##
 ##                               File: const.py                               ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -52,6 +52,15 @@ APP_ESCAPED              = -1
 OBJ_PROTOTYPE_FINGER     = config['Names']['finger_object']
 OBJ_PROTOTYPE_SURFACE    = config['Names']['armature_object']
 OBJ_PROTOTYPE_VERTEX_ALL = config['Names']['armature_control']
+
+
+# EXPERIMENTAL
+OBJ_ARMATURE_CONTROL     = config['Names']['armature_control']
+OBJ_ARMATURE             = config['Names']['armature_object']
+OBJ_GEOMETRY             = config['Names']['geometry_object']
+# EXPERIMENTAL
+
+
 OBJ_GLOBAL               = config['Names']['logic']
 OBJ_DOT                  = config['Names']['dot_object'] + INT_BLENDER_COUNTER
 OBJ_TEXT_FIRST           = config['Names']['text_first_object']

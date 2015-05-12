@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.2.1.014 (20150511)                        ##
+##                       Version: 0.2.2.051 (20150513)                        ##
 ##                                 File: TODO                                 ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -27,7 +27,7 @@
 ##                                                                            ##
 ######################################################################## INFO ##
 
-#---------------------------- 16 POSTS IN 9 FILES -----------------------------#
+#---------------------------- 19 POSTS IN 11 FILES ----------------------------#
 TODO:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 1
@@ -75,76 +75,99 @@ TODO:
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 7
-  - file: generator.py
-    line: 263
-    note: |
-          figure out how to set values, when falloff_type='CUSTOM_CURVE'
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 8
-  - file: generator.py
-    line: 319
-    note: |
-          it is very likely that the vertices list is not needed!
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 9
-  - file: main.py
-    line: 554
-    note: |
-          while pinching, make other fingers hidden
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 10
-  - file: main.py
-    line: 587
-    note: |
-          calculate the midpoint between index and thumb
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 11
   - file: hand.py
     line: 166
     note: |
           implement excepttion
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 12
+  # 8
+  - file: main.py
+    line: 563
+    note: |
+          while pinching, make other fingers hidden
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 9
+  - file: main.py
+    line: 596
+    note: |
+          calculate the midpoint between index and thumb
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 10
   - file: app.py
-    line: 94
+    line: 99
     note: |
           make build-script work :)
           Import cutils modules => versioning
           import build
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 13
+  # 11
   - file: app.py
-    line: 209
+    line: 214
     note: |
           fake casted shadow with negative lamp:
           https://www.youtube.com/watch?v=iJUlqwKEdVQ
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 14
+  # 12
   - file: app.py
-    line: 294
+    line: 305
     note: |
           do I still need to set the states of these?
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 15
+  # 13
   - file: app.py
-    line: 300
+    line: 311
     note: |
           positioner(*finger.tip_position) => leaking memory and never returns
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 16
+  # 14
   - file: app.py
-    line: 311
+    line: 322
     note: |
           use `leap_frame.images` as background
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 15
+  - file: genenv.py
+    line: 174
+    note: |
+          this is not working as it should be:
+          Set context and toggle to camera view
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 16
+  - file: genenv.py
+    line: 213
+    note: |
+          this is not working as it should be:
+          Set context and toggle
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 17
+  - file: genenv.py
+    line: 263
+    note: |
+          figure out how to set values, when falloff_type='CUSTOM_CURVE'
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 18
+  - file: sphere.py
+    line: 61
+    note: |
+          calculate size based on region_count and mesh_face_width
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 19
+  - file: plane.py
+    line: 89
+    note: |
+          it is very likely that the vertices list is not needed!
 
 
 
@@ -199,7 +222,7 @@ HACK:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 3
   - file: app.py
-    line: 149
+    line: 154
     note: |
           There is no 'NONE_KEY' defined, so setting the escape key to 0
           could cause undefined behaviour, as it is undocomunted. During
@@ -209,7 +232,7 @@ HACK:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 4
   - file: app.py
-    line: 201
+    line: 206
     note: |
           Surface arguments should be protoype_creator methods, instead of
           actual objects, but right now, prototyping the surface object
@@ -219,14 +242,14 @@ HACK:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 5
   - file: app.py
-    line: 212
+    line: 217
     note: |
           yuck.. this is getting out of hands now :(:(:(
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 6
   - file: app.py
-    line: 228
+    line: 239
     note: |
           The ugliest hack I've ever done...
 
@@ -245,7 +268,7 @@ NOTE:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 2
   - file: app.py
-    line: 122
+    line: 127
     note: |
           local->global: http://blenderartists.org/forum/archive/index.php/t-180690.html
 

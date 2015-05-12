@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.2.0.998 (20150510)                        ##
+##                       Version: 0.2.1.015 (20150513)                        ##
 ##                               File: main.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -32,7 +32,7 @@ from itertools   import repeat, chain
 from math        import sqrt, radians
 
 # Import blender modules
-from mathutils import Matrix
+from mathutils import Matrix, Euler, Quaternion
 
 # Import linmath modules
 from linmath import Vec3, Mat4x4
@@ -108,6 +108,12 @@ def rotation_matrix_from_vectors(direction, target_direction):
                 (skew*skew)*((1 - direction*target_direction)/v.length**2))
     except ZeroDivisionError:
         return Mat4x4.identity()
+
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+def rotation_quaternion_from_vectors(direction, target_direction):
+    return Quaternion(target_direction.cross_product(direction),
+                      sqrt((direction.length**2)*(target_direction.length**2)) +
+                           direction*target_direction)
 
 
 
@@ -375,10 +381,13 @@ class KibuVR(Application):
             try:
                 rotation = Matrix(tuple(rotation_matrix_from_vectors(self._dual_grab_vector,
                                                                      curr_grab_vector))).to_euler()
+                rotation = -rotation[0], -rotation[1], -rotation[2]
                 # Rotate parent object of all vertices
-                self.vertex_origo.applyRotation((-rotation[0],
-                                                 -rotation[1],
-                                                 -rotation[2]))
+                #self.vertex_origo.applyRotation(rotation)
+
+                self._armature_control.applyRotation(rotation)
+                self._armature.applyRotation(rotation)
+                #self._geometry.applyRotation(rotation)
                 # Scale the parent object
                 try:
                     scale = 1/(self._dual_grab_length/curr_grab_length)

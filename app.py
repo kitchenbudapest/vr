@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.2.1.007 (20150511)                        ##
+##                       Version: 0.2.1.015 (20150513)                        ##
 ##                                File: app.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -59,6 +59,11 @@ from const import (INT_OUTPUT_FILE,
                    OBJ_PROTOTYPE_FINGER,
                    OBJ_PROTOTYPE_SURFACE,
                    OBJ_PROTOTYPE_VERTEX_ALL,
+
+                   OBJ_ARMATURE_CONTROL,
+                   OBJ_ARMATURE,
+                   OBJ_GEOMETRY,
+
                    OBJ_GLOBAL,
                    OBJ_DOT,
                    OBJ_TEXT_FIRST,
@@ -210,7 +215,13 @@ class Application(CallbackManager):
         #       https://www.youtube.com/watch?v=iJUlqwKEdVQ
 
         # HACK: yuck.. this is getting out of hands now :(:(:(
-        self._vertex_origo = self._blender_scene.objects[OBJ_PROTOTYPE_VERTEX_ALL]
+        self._vertex_origo = blender_scene.objects[OBJ_PROTOTYPE_VERTEX_ALL]
+
+        # EXPERIMENTAL
+        self._armature_control = blender_scene.objects[OBJ_ARMATURE_CONTROL]
+        self._armature         = blender_scene.objects[OBJ_ARMATURE]
+        self._geometry         = blender_scene.objects[OBJ_GEOMETRY]
+        # EXPERIMENTAL
 
         # Set position setter
         # If DESK
@@ -261,9 +272,9 @@ class Application(CallbackManager):
         leap_frame = self._leap_controller.frame()
 
         # Set camera position and orientation
-        #self._camera.worldPosition = rift_frame.position
-        #self._camera.worldOrientation = \
-        #    RIFT_ORIENTATION_SHIFT*Quaternion(rift_frame.orientation)
+        self._camera.worldPosition = rift_frame.position
+        self._camera.worldOrientation = \
+            RIFT_ORIENTATION_SHIFT*Quaternion(rift_frame.orientation)
 
         # If leap was unable to get a proper frame
         if not leap_frame.is_valid:

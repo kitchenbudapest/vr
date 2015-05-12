@@ -4,8 +4,8 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.2.0.973 (20150510)                        ##
-##                             File: generator.py                             ##
+##                       Version: 0.2.2.029 (20150513)                        ##
+##                              File: genenv.py                               ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
 ##                         <http://plastey.kibu.hu>.                          ##
@@ -38,22 +38,11 @@ from itertools    import repeat, count
 import bpy
 import bmesh
 
+# Import plastey modules
+import plane
+import sphere
 
-#------------------------------------------------------------------------------#
-def float_range(*args):
-    try:
-        start, stop, step, *rest = args
-    except ValueError:
-        step = 1
-        try:
-            start, stop = args
-        except ValueError:
-            start = 0
-            stop = args[0]
-    while start < stop:
-        yield start
-        start += step
-
+GEN_PLANE = False
 
 #------------------------------------------------------------------------------#
 # Read configuration
@@ -134,13 +123,14 @@ VR_VAR_TEXT_TIMER        = config['Scripts']['var_text_time']
 VAR_SCREEN_WIDTH  = 'screen_width'
 VAR_SCREEN_HEIGHT = 'screen_height'
 
+
 #------------------------------------------------------------------------------#
 # Reset cursor location
 bpy.context.scene.cursor_location = 0, 0, 0
 
-# Import fonts
 
-# Create new scene, object and mesh
+#------------------------------------------------------------------------------#
+# Create blender data
 scene          = bpy.data.scenes.new(VR_SCENE)
 hud_scene      = bpy.data.scenes.new(VR_HUD_SCENE)
 camera         = bpy.data.cameras.new(VR_CAMERA_DATA)
@@ -153,6 +143,8 @@ world          = bpy.data.worlds.new(VR_WORLD)
 lamp_1         = bpy.data.lamps.new(VR_LAMP_TOP, 'SPOT')
 lamp_2         = bpy.data.lamps.new(VR_LAMP_BOTTOM, 'SPOT')
 fng_mesh       = bpy.data.meshes.new(VR_FINGER_MESH)
+
+# Create blender objects
 lmp_object1    = bpy.data.objects.new(VR_LAMP_TOP, lamp_1)
 lmp_object2    = bpy.data.objects.new(VR_LAMP_BOTTOM, lamp_2)
 log_object     = bpy.data.objects.new(VR_LOGIC_OBJECT, None)
@@ -165,6 +157,8 @@ ctl_object     = bpy.data.objects.new(VR_ARMATURE_CONTROL, None)
 arm_object     = bpy.data.objects.new(VR_ARMATURE_OBJECT, armature)
 fng_object     = bpy.data.objects.new(VR_FINGER_OBJECT, fng_mesh)
 
+
+#------------------------------------------------------------------------------#
 # Import and set fonts
 for font_name, property in ((VR_FONT_REGULAR_FILE    , 'font'),
                             (VR_FONT_BOLD_FILE       , 'font_bold'),
@@ -175,6 +169,9 @@ for font_name, property in ((VR_FONT_REGULAR_FILE    , 'font'),
     setattr(text_1st, property, bpy.data.fonts[font_name])
     setattr(text_nth, property, bpy.data.fonts[font_name])
 
+
+#------------------------------------------------------------------------------#
+# TODO: this is not working as it should be:
 # Set context and toggle to camera view
 bpy.context.screen.scene = hud_scene
 for area in bpy.context.screen.areas:
@@ -211,6 +208,9 @@ txt_nth_object.rotation_euler         = radians(90), 0, 0
 txt_1st_object.color                  = VR_TEXT_FIRST_COLOR + (VR_TEXT_FIRST_ALPHA,)
 txt_nth_object.color                  = VR_TEXT_OTHER_COLOR + (VR_TEXT_OTHER_ALPHA,)
 
+
+#------------------------------------------------------------------------------#
+# TODO: this is not working as it should be:
 # Set context and toggle
 bpy.context.screen.scene = scene
 for area in bpy.context.screen.areas:
@@ -283,6 +283,8 @@ lamp_2.shadow_buffer_size    = 1024
 lamp_2.spot_size             = radians(VR_LAMP_BOTTOM_SIZE)
 lamp_2.distance              = VR_LAMP_BOTTOM_DISTANCE
 
+
+#------------------------------------------------------------------------------#
 # Set face and wire material for mesh
 for material_name, material_color in ((VR_MATERIAL_GEOMETRY, VR_FACE_COLOR),
                                       (VR_MATERIAL_WIRE    , VR_EDGE_COLOR)):
@@ -300,70 +302,8 @@ for material_name, material_color in ((VR_MATERIAL_GEOMETRY, VR_FACE_COLOR),
     material.game_settings.use_backface_culling = False
     mesh.materials.append(material)
 
-# Make armature active
-bpy.context.scene.objects.active = arm_object
-bpy.ops.object.mode_set(mode='EDIT')
 
-# Create mesh
-geometry = bmesh.new()
-
-# Calculate values for the loops
-step_x  = VR_MESH_FACE_WIDTH/VR_SUBDIVISION_LEVEL_X
-step_y  = VR_MESH_FACE_HEIGHT/VR_SUBDIVISION_LEVEL_Y
-range_x = VR_REGION_COUNT_X*VR_MESH_FACE_WIDTH + step_x
-range_y = VR_REGION_COUNT_Y*VR_MESH_FACE_HEIGHT + step_y
-start_x = -VR_REGION_COUNT_X/2*VR_MESH_FACE_WIDTH
-start_y = -VR_REGION_COUNT_Y/2*VR_MESH_FACE_HEIGHT
-
-# Set vertex coordinates and create faces
-# TODO: it is very likely that the vertices list is not needed!
-vertices = []
-bevel_vertices = []
-counter  = count()
-for row_i, y in enumerate(float_range(start_y, start_y + range_y, step_y)):
-    curr_row = []
-    for col_i, x in enumerate(float_range(start_x, start_x + range_x, step_x)):
-        curr_vert = geometry.verts.new((x, y, 0))
-
-        if (not col_i%VR_SUBDIVISION_LEVEL_X and
-            not row_i%VR_SUBDIVISION_LEVEL_Y):
-                bone = armature.edit_bones.new(VR_ARMATURE_BONE.format(next(counter)))
-                bone.head = x, y, 0
-                bone.tail = x, y, 1
-                curr_vert.select = True
-        elif (not col_i%VR_SUBDIVISION_LEVEL_X or
-              not row_i%VR_SUBDIVISION_LEVEL_Y):
-                curr_vert.select = True
-
-        if col_i and row_i:
-            geometry.faces.new((prev_row[col_i - 1], prev_row[col_i], curr_vert, prev_vert))
-
-        prev_vert = curr_vert
-        curr_row.append(curr_vert)
-    prev_row = curr_row
-    vertices.append(curr_row)
-
-# Write bmesh to mesh-object and prevent further access
-geometry.to_mesh(mesh)
-geometry.free()
-
-# Close editing bones
-bpy.ops.object.mode_set(mode='OBJECT')
-# Open editing geometry
-bpy.context.scene.objects.active = geo_object
-bpy.ops.object.mode_set(mode='EDIT')
-
-# 'Draw' wires as bevels
-bpy.ops.mesh.bevel(offset=VR_MESH_WIRE_WIDTH, vertex_only=False)
-# Assign materials to selection
-bpy.context.object.active_material_index = 1
-bpy.ops.object.material_slot_assign()
-
-# Close editing geometry
-bpy.ops.object.mode_set(mode='OBJECT')
-# Switch back to armature
-bpy.context.scene.objects.active = arm_object
-
+#------------------------------------------------------------------------------#
 # Create dot material
 dot_material = bpy.data.materials.new(VR_MATERIAL_GEOMETRY)
 dot_material.diffuse_color           = VR_DOT_COLOR
@@ -376,44 +316,32 @@ dot_material.use_cast_shadows        = True
 dot_material.use_cast_buffer_shadows = True
 dot_material.use_object_color        = True
 
-# Add constraints to bones
-for i, bone in enumerate(arm_object.pose.bones):
-    dot_mesh   = bpy.data.meshes.new(VR_DOT_MESH.format(i))
-    dot_object = bpy.data.objects.new(VR_DOT_OBJECT.format(i), dot_mesh)
-    scene.objects.link(dot_object)
 
-    dot_mesh.materials.append(dot_material)
+#------------------------------------------------------------------------------#
+# Build base geometry
+(plane.generate if GEN_PLANE else sphere.generate)(
+    scene               = scene,
+    geo_data            = mesh,
+    geo_object          = geo_object,
+    arm_data            = armature,
+    arm_object          = arm_object,
+    ctl_object          = ctl_object,
+    dot_material        = dot_material,
+    bone_name           = VR_ARMATURE_BONE,
+    dot_data_name       = VR_DOT_MESH,
+    dot_object_name     = VR_DOT_OBJECT,
+    region_count_x      = VR_REGION_COUNT_X,
+    region_count_y      = VR_REGION_COUNT_Y,
+    subdivision_level_x = VR_SUBDIVISION_LEVEL_X,
+    subdivision_level_y = VR_SUBDIVISION_LEVEL_Y,
+    mesh_face_width     = VR_MESH_FACE_WIDTH,
+    mesh_face_height    = VR_MESH_FACE_HEIGHT,
+    edge_width          = VR_MESH_WIRE_WIDTH,
+    dot_radius          = VR_VERTEX_RADIUS
+)
 
-    # Create mesh-geometry
-    geometry = bmesh.new()
-    bmesh.ops.create_cube(geometry, size=VR_VERTEX_RADIUS)
-    geometry.to_mesh(dot_mesh)
-    geometry.free()
 
-    # Set object's parent and move it to place
-    dot_object.parent   = ctl_object
-    dot_object.location = bone.head
-
-    # Add modifiers
-    modifier = dot_object.modifiers.new('Subsurf', 'SUBSURF')
-    modifier.levels = 3
-
-    # Add constraints
-    constraint = bone.constraints.new('COPY_LOCATION')
-    constraint.target = dot_object
-
-    constraint = bone.constraints.new('COPY_ROTATION')
-    constraint.target = ctl_object
-    constraint.use_offset = True
-
-    constraint = bone.constraints.new('COPY_SCALE')
-    constraint.target = ctl_object
-
-# Set auto-weighted armature-parent to the geometry
-geo_object.select = True
-arm_object.select = True
-bpy.ops.object.parent_set(type='ARMATURE_AUTO')
-
+#------------------------------------------------------------------------------#
 # Create and move finger prototypes to layer
 geometry = bmesh.new()
 bmesh.ops.create_cube(geometry, size=VR_FINGER_RADIUS)
@@ -423,6 +351,7 @@ fng_object.layers = (False, True) + (False,)*18
 modifier = fng_object.modifiers.new('Subsurf', 'SUBSURF')
 modifier.levels = 3
 
+# Create finger material
 fng_material = bpy.data.materials.new(VR_MATERIAL_GEOMETRY)
 fng_material.diffuse_color           = VR_DOT_COLOR
 fng_material.use_shadeless           = True
@@ -435,9 +364,13 @@ fng_material.use_cast_buffer_shadows = True
 fng_material.use_object_color        = True
 fng_mesh.materials.append(fng_material)
 
+
+#------------------------------------------------------------------------------#
 # Load text files
 bpy.data.texts.load(VR_DISTORTION_SHADER)
 
+
+#------------------------------------------------------------------------------#
 # Make logic object active and selected
 bpy.context.scene.objects.active = log_object
 log_object.select = True
