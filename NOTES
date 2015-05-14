@@ -5,6 +5,7 @@ Keyboard bindings:
     R                =>    Recover from auto-save
     L                =>    Load last saved from temporary folder
 
+    Escape           =>    Shut down
     BackSpace        =>    Clear messages
     Space            =>    Reset scene
     Home             =>    Place view back to start

@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.2.2.117 (20150514)                        ##
+##                       Version: 0.2.3.137 (20150514)                        ##
 ##                               File: main.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -145,10 +145,10 @@ class KibuVR(Application):
 
         # Set initial states
         self._is_picked        = False
+        self._is_grabbed       = False
         self._is_dual_grabbed  = False
         self._grab_position    = None
         self._grab_start       = None
-        self._grab_stop        = None
         self._dual_grab_vector = None
         self._dual_grab_length = None
 
@@ -329,9 +329,36 @@ class KibuVR(Application):
                     print('[MOVE] down')
                 # Moved up
                 else:
+                    surface = self.surface
+                    vertices = set()
                     for vertex in self.surface.deselect_all():
                         vertex.color = COLOR_GEOMETRY_DARK
+                        vertices.add(vertex)
                     self.text.write('Deselect all vertices')
+
+                    @History.event
+                    def select_vertices(direction, prefix):
+                        for vertex in vertices:
+                            try:
+                                surface.select(vertex.name)
+                                vertex.color = COLOR_GEOMETRY_LITE
+                            except (VertexLocked, VertexAlreadySelected):
+                                pass
+                        self.text.write('{PREFIX}Select vertices'.format(PREFIX=prefix))
+
+                    @History.event
+                    def deselect_vertices(direction, prefix):
+                        for vertex in vertices:
+                            try:
+                                surface.deselect(vertex.name)
+                                vertex.color = COLOR_GEOMETRY_DARK
+                            except VertexLocked:
+                                pass
+                        self.text.write('{PREFIX}Deselect vertices'.format(PREFIX=prefix))
+
+                    # Save events
+                    self._history.push(undo=select_vertices,
+                                       redo=deselect_vertices)
                     #print('[MOVE] up')
                 raise KeyError
 
@@ -409,37 +436,6 @@ class KibuVR(Application):
             self._dual_grab_length = curr_grab_length
             self._is_dual_grabbed  = True
         except ValueError:
-
-
-
-            #vertices = tuple(self.surface.selected())
-            #start = self._grab_start
-            #stop  = self._grab_stop
-            #movement = Vec3.from_line(start[0], start[1], start[2],
-            #                          stop[0],  stop[1],  stop[2])
-            ## Create events
-            #@History.event
-            #def move_vertices(direction, prefix):
-            #    surface = self.surface
-            #    # Move all selected vertices
-            #    for vertex in vertices:
-            #        # If opponent user is not using them
-            #        if not surface.is_locked(vertex.name)
-            #            vertex.applyMovement(movement)
-            #    # Update geometry
-            #    surface.update()
-            #    self.text = '{PREFIX}Vertices moved to position'.format(PREFIX=prefix)
-
-            #movement *= -1
-            #@History.event
-            #def move_back_vertices(direction, prefix):
-            #    pass
-
-            #self._history.push(undo=move_back_vertices,
-            #                   redo=move_vertices)
-
-
-
             # If only one hand is grabbing
             try:
                 hand = grabbing[0]
@@ -447,9 +443,16 @@ class KibuVR(Application):
                 prev = self._grab_position
                 hand.hide_all('thumb')
                 hand.thumb.color = COLOR_GRAB_MOVE_OKAY
-                # If there is a single grab going on
+
+                # If this is a mistaken single grab (one hand released accidentaly)
                 if self._is_dual_grabbed:
                     return
+
+                # If this is the first cycle of a single grab
+                if not self._is_grabbed:
+                    self._is_grabbed = True
+                    self._grab_start = {id: tuple(v.localPosition) for id, v in self.surface.selected()}
+
                 # If this grab is part of a previous grab-cycle
                 try:
                     # Calculate vector between previous
@@ -470,9 +473,45 @@ class KibuVR(Application):
             except IndexError:
                 if not self._is_picked:
                     self.hands.show_all()
+
+                # If this release is the end of a grab cycle
+                if self._is_grabbed:
+                    start = self._grab_start
+                    stop  = {id: tuple(v.localPosition) for id, v in self.surface.selected()}
+
+                    # Create events
+                    @History.event
+                    def move_back_vertices(direction, prefix):
+                        surface = self.surface
+                        # Move all selected vertices
+                        for identifier, position in start.items():
+                            # If opponent user is not using them
+                            if not surface.is_locked(identifier):
+                                surface[identifier].localPosition = position
+                        # Update geometry
+                        surface.update()
+                        self.text.write('{PREFIX}Vertices moved to position'.format(PREFIX=prefix))
+
+                    @History.event
+                    def move_vertices(direction, prefix):
+                        surface = self.surface
+                        # Move all selected vertices
+                        for identifier, position in stop.items():
+                            # If opponent user is not using them
+                            if not surface.is_locked(identifier):
+                                surface[identifier].localPosition = position
+                        # Update geometry
+                        surface.update()
+                        self.text.write('{PREFIX}Vertices moved to position'.format(PREFIX=prefix))
+
+                    # Save events
+                    self._history.push(undo=move_back_vertices,
+                                       redo=move_vertices)
+
                 self._grab_position    = \
                 self._dual_grab_vector = \
                 self._dual_grab_length = None
+                self._is_grabbed       = \
                 self._is_dual_grabbed  = False
 
 
