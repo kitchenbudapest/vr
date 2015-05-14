@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.2.1.015 (20150513)                        ##
+##                       Version: 0.2.2.117 (20150514)                        ##
 ##                               File: main.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -53,6 +53,7 @@ from app     import (Application,
 from const import (APP_ESCAPED,
                    COLOR_ROTATE_PINCH_BASE,
                    COLOR_ROTATE_PINCH_OKAY,
+                   COLOR_GRAB_MOVE_OKAY,
                    COLOR_GRAB_PINCH_BASE,
                    COLOR_GRAB_PINCH_FAIL,
                    COLOR_GRAB_PINCH_OKAY,
@@ -150,6 +151,8 @@ class KibuVR(Application):
         self._grab_stop        = None
         self._dual_grab_vector = None
         self._dual_grab_length = None
+
+        self._zoomed_pick_distance = PICK_HOLD_DISTANCE
 
         # Set callback-states which will be used
         # duyring the execution of the callbacks
@@ -367,8 +370,8 @@ class KibuVR(Application):
             left_hand, right_hand = grabbing
             #  Color thumbs and hide other fingers, so it won't confuse the user
             left_hand.thumb.color = right_hand.thumb.color = COLOR_ROTATE_PINCH_OKAY
-            left_hand.hide(all_except=('thumb',))
-            right_hand.hide(all_except=('thumb',))
+            left_hand.hide_all('thumb')
+            right_hand.hide_all('thumb')
             # Get the thumb positionS
             ltp = left_hand.thumb.position
             rtp = right_hand.thumb.position
@@ -391,6 +394,7 @@ class KibuVR(Application):
                 # Scale the parent object
                 try:
                     scale = 1/(self._dual_grab_length/curr_grab_length)
+                    self._zoomed_pick_distance *= scale
                     self.vertex_origo.worldScale = \
                         [old*new for old, new in zip(self.vertex_origo.worldScale, repeat(scale))]
                 except ZeroDivisionError:
@@ -404,8 +408,8 @@ class KibuVR(Application):
             self._dual_grab_vector = curr_grab_vector
             self._dual_grab_length = curr_grab_length
             self._is_dual_grabbed  = True
-            print('[ ROTATING ]')
         except ValueError:
+
 
 
             #vertices = tuple(self.surface.selected())
@@ -435,10 +439,14 @@ class KibuVR(Application):
             #                   redo=move_vertices)
 
 
+
             # If only one hand is grabbing
             try:
-                curr = tuple(grabbing[0].thumb.position)
+                hand = grabbing[0]
+                curr = tuple(hand.thumb.position)
                 prev = self._grab_position
+                hand.hide_all('thumb')
+                hand.thumb.color = COLOR_GRAB_MOVE_OKAY
                 # If there is a single grab going on
                 if self._is_dual_grabbed:
                     return
@@ -460,6 +468,8 @@ class KibuVR(Application):
                 self._grab_position = curr
             # If none of the hands are grabbing
             except IndexError:
+                if not self._is_picked:
+                    self.hands.show_all()
                 self._grab_position    = \
                 self._dual_grab_vector = \
                 self._dual_grab_length = None
@@ -481,12 +491,14 @@ class KibuVR(Application):
                     index_position) < PICK_RELEASE_DISTANCE:
             # Local reference
             surface = self.surface
+            # Hide non picking fingers
+            hand.hide_all('thumb', 'index')
             # Check all vertices on the surface
             for vertex in surface:
                 # If vertex's distance to the thumb is in the picking-hold-range
                 if distance(midpoint(thumb_position,
                                      index_position),
-                            vertex.worldPosition) < PICK_HOLD_DISTANCE:
+                            vertex.worldPosition) < self._zoomed_pick_distance:
                     # If user is already picking
                     if self._is_picked:
                         return
@@ -548,69 +560,19 @@ class KibuVR(Application):
                     # Feedback the user about the pick's state
                     hand.thumb.color = hand.index.color = COLOR_GRAB_PINCH_OKAY
                     # Stop the iterations
-                    return
+                    break
+            # Picked in the air
+            else:
+                hand.thumb.color = hand.index.color = COLOR_GRAB_PINCH_FAIL
         # If pick is released
         else:
+            # Show all fingers again
+            hand.show_all()
             # Feedback the user about the pick's state
             hand.thumb.color  = \
             hand.index.color  = COLOR_GRAB_PINCH_BASE
             # Set state
             self._is_picked = False
-
-
-    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def on_pinch(self, states):
-        # TODO: while pinching, make other fingers hidden
-        if states['grabbed']:
-            return
-
-        # Get local reference of this hand
-        hand = states['hand']
-
-        # If user is pinching with thumb and index fingers
-        if distance(hand.thumb.position,
-                    hand.index.position) < PINCH_FINGERS_DISTANCE:
-
-            surface = self.surface
-            try:
-                hand.selected_vertices.worldPosition = hand.index.position
-                surface.update()
-                return
-            except (TypeError, AttributeError):
-                pass
-
-            hand.thumb.color = hand.index.color = COLOR_GRAB_PINCH_FAIL
-
-            # Go through all vertices of surfaces
-            for vertex in surface:
-                # Check if pinching a vertex
-                if (distance(hand.thumb.position,
-                             vertex.worldPosition) < PINCH_VERTEX_FINGERS_DISTANCE or
-                    distance(hand.index.position,
-                             vertex.worldPosition) < PINCH_VERTEX_FINGERS_DISTANCE):
-                        try:
-                            surface.select(vertex.name)
-                        except VertexLocked:
-                            return
-                        # If so edit the vertex's position and stop iterating
-                        # TODO: calculate the midpoint between index and thumb
-                        hand.thumb.color = hand.index.color = COLOR_GRAB_PINCH_OKAY
-                        vertex.color = COLOR_GEOMETRY_LITE
-                        vertex.worldPosition = hand.index.position
-                        hand.selected_vertices = vertex
-                        surface.update()
-                        return
-        # If there is no pinch or pinch was released
-        else:
-            try:
-                vertex = hand.selected_vertices
-                vertex.color = COLOR_GEOMETRY_DARK
-                self.surface.deselect(vertex.name)
-            # 'NoneType' object has no attribute 'color'
-            except AttributeError:
-                pass
-            hand.selected_vertices = None
-            hand.thumb.color = hand.index.color = COLOR_GRAB_PINCH_BASE
 
 
 

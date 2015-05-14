@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.2.2.051 (20150513)                        ##
+##                       Version: 0.2.2.122 (20150514)                        ##
 ##                                 File: TODO                                 ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -27,7 +27,7 @@
 ##                                                                            ##
 ######################################################################## INFO ##
 
-#---------------------------- 19 POSTS IN 11 FILES ----------------------------#
+#---------------------------- 16 POSTS IN 9 FILES -----------------------------#
 TODO:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 1
@@ -75,65 +75,6 @@ TODO:
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 7
-  - file: hand.py
-    line: 166
-    note: |
-          implement excepttion
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 8
-  - file: main.py
-    line: 563
-    note: |
-          while pinching, make other fingers hidden
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 9
-  - file: main.py
-    line: 596
-    note: |
-          calculate the midpoint between index and thumb
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 10
-  - file: app.py
-    line: 99
-    note: |
-          make build-script work :)
-          Import cutils modules => versioning
-          import build
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 11
-  - file: app.py
-    line: 214
-    note: |
-          fake casted shadow with negative lamp:
-          https://www.youtube.com/watch?v=iJUlqwKEdVQ
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 12
-  - file: app.py
-    line: 305
-    note: |
-          do I still need to set the states of these?
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 13
-  - file: app.py
-    line: 311
-    note: |
-          positioner(*finger.tip_position) => leaking memory and never returns
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 14
-  - file: app.py
-    line: 322
-    note: |
-          use `leap_frame.images` as background
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 15
   - file: genenv.py
     line: 174
     note: |
@@ -141,7 +82,7 @@ TODO:
           Set context and toggle to camera view
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 16
+  # 8
   - file: genenv.py
     line: 213
     note: |
@@ -149,25 +90,63 @@ TODO:
           Set context and toggle
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 17
+  # 9
   - file: genenv.py
     line: 263
     note: |
           figure out how to set values, when falloff_type='CUSTOM_CURVE'
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 18
+  # 10
   - file: sphere.py
     line: 61
     note: |
           calculate size based on region_count and mesh_face_width
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 19
+  # 11
   - file: plane.py
     line: 89
     note: |
           it is very likely that the vertices list is not needed!
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 12
+  - file: app.py
+    line: 116
+    note: |
+          make build-script work :)
+          Import cutils modules => versioning
+          import build
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 13
+  - file: app.py
+    line: 272
+    note: |
+          fake casted shadow with negative lamp:
+          https://www.youtube.com/watch?v=iJUlqwKEdVQ
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 14
+  - file: app.py
+    line: 431
+    note: |
+          do I still need to set the states of these?
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 15
+  - file: app.py
+    line: 437
+    note: |
+          positioner(*finger.tip_position) => leaking memory and never returns
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 16
+  - file: app.py
+    line: 448
+    note: |
+          use `leap_frame.images` as background
 
 
 
@@ -201,12 +180,12 @@ BUG:
 
 
 
-#----------------------------- 6 POSTS IN 3 FILES -----------------------------#
+#----------------------------- 7 POSTS IN 3 FILES -----------------------------#
 HACK:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 1
   - file: plastey.py
-    line: 423
+    line: 464
     note: |
           Is this really the best option we have, to get into fullscreen,
           other than using the blender's fullscreen option, which will
@@ -215,14 +194,21 @@ HACK:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 2
   - file: hand.py
-    line: 144
+    line: 153
     note: |
           self.ring._object.setVisible(False, True)
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 3
+  - file: hand.py
+    line: 192
+    note: |
+          exceptions = set(chain(exceptions, ('ring', 'pinky')))
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 4
   - file: app.py
-    line: 154
+    line: 175
     note: |
           There is no 'NONE_KEY' defined, so setting the escape key to 0
           could cause undefined behaviour, as it is undocomunted. During
@@ -230,9 +216,9 @@ HACK:
           is a working work-around. (At least on Arch Linux)
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 4
+  # 5
   - file: app.py
-    line: 206
+    line: 264
     note: |
           Surface arguments should be protoype_creator methods, instead of
           actual objects, but right now, prototyping the surface object
@@ -240,16 +226,16 @@ HACK:
           like that..
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 5
+  # 6
   - file: app.py
-    line: 217
+    line: 275
     note: |
           yuck.. this is getting out of hands now :(:(:(
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 6
+  # 7
   - file: app.py
-    line: 239
+    line: 349
     note: |
           The ugliest hack I've ever done...
 
@@ -268,7 +254,7 @@ NOTE:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 2
   - file: app.py
-    line: 127
+    line: 148
     note: |
           local->global: http://blenderartists.org/forum/archive/index.php/t-180690.html
 

@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.2.1.015 (20150513)                        ##
+##                       Version: 0.2.2.112 (20150514)                        ##
 ##                               File: const.py                               ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -30,9 +30,9 @@
 # Import python modules
 from math         import radians
 from configparser import ConfigParser
+from os.path      import join, expanduser
 
-# Import blender modules
-from mathutils import Quaternion
+# Import blender modules => at the bottom
 
 # Read configuration
 config = ConfigParser()
@@ -41,8 +41,36 @@ with open('config.ini', encoding='utf-8') as file:
 
 # Internal details
 INT_BLENDER_COUNTER      = config['Internal']['blender_counter']
-INT_OUTPUT_FILE          = config['Internal']['output_file']
 INT_TEXT_INTERVAL        = float(config['Internal']['message_interval'])
+INT_AUTO_SAVE_INTERVAL   = float(config['Internal']['auto_save_interval'])
+INT_TEMPORARY_FOLDER     = expanduser(config['Internal']['temp_base_dir'])
+INT_PERMANENT_FOLDER     = expanduser(config['Internal']['permanent_save_dir'])
+INT_TEMP_SAVE_FOLDER     = expanduser(join(INT_TEMPORARY_FOLDER,
+                                           config['Internal']['temp_save_folder']))
+INT_TEMP_SAVE_FILE       = join(INT_TEMP_SAVE_FOLDER,
+                                config['Internal']['temp_save_file'])
+INT_AUTO_SAVE_FOLDER     = expanduser(join(INT_TEMPORARY_FOLDER,
+                                           config['Internal']['temp_auto_save_dir']))
+INT_AUTO_SAVE_FILE       = join(INT_AUTO_SAVE_FOLDER,
+                                config['Internal']['temp_auto_save_file'])
+#INT_STATE_SHUT_DOWN      = join(config['Internal']['temp_base_dir'],
+#                                config['Internal']['temp_states'],
+#                                config['Internal']['state_shut_down'])
+#INT_STATE_RESTART        = join(config['Internal']['temp_base_dir'],
+#                                config['Internal']['temp_states'],
+#                                config['Internal']['state_restart'])
+#INT_STATE_RECOVER_AUTO   = join(config['Internal']['temp_base_dir'],
+#                                config['Internal']['temp_states'],
+#                                config['Internal']['state_recover_auto'])
+#INT_STATE_DONE           = join(config['Internal']['temp_base_dir'],
+#                                config['Internal']['temp_feedbacks'],
+#                                config['Internal']['state_done'])
+
+WINDOW_FULL_SCREEN       = bool(eval(config['Render']['full_screen']))
+WINDOW_DISPLAY_X         = int(config['Render']['display_x'])
+WINDOW_DISPLAY_Y         = int(config['Render']['display_y'])
+WINDOW_RESOLUTION_X      = int(config['Render']['resolution_x'])
+WINDOW_RESOLUTION_Y      = int(config['Render']['resolution_y'])
 
 # Application constants
 APP_RUNNING              =  0
@@ -94,6 +122,9 @@ COLOR_GRAB_PINCH_FAIL    = 1.000, 0.000, 0.000, 1.000
 COLOR_ROTATE_PINCH_BASE  = COLOR_FINGER_BASE
 COLOR_ROTATE_PINCH_OKAY  = 0.000, 0.000, 1.000, 1.000
 
+COLOR_GRAB_MOVE_BASE     = COLOR_FINGER_BASE
+COLOR_GRAB_MOVE_OKAY     = 1.000, 1.000, 0.000, 1.000
+
 COLOR_LOCKED             = 1.000, 1.000, 0.000, 1.000
 COLOR_UNLOCKED           = COLOR_FINGER_BASE
 
@@ -112,4 +143,10 @@ LEAP_MULTIPLIER          =  0.1
 RIFT_MULTIPLIER          =  10
 RIFT_POSITION_SHIFT_Y    = -20
 RIFT_POSITION_SHIFT_Z    =  10
-RIFT_ORIENTATION_SHIFT   = Quaternion((1, 0, 0), radians(80))
+
+try:
+    from mathutils import Quaternion
+    RIFT_ORIENTATION_SHIFT   = Quaternion((1, 0, 0), radians(80))
+except ImportError:
+    print('const.py => RIFT_ORIENTATION_SHIFT is not available.\n'
+          '(Hint: Failed to load the mathutils module of blender)')

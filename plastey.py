@@ -5,7 +5,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.1.8.772 (20150505)                        ##
+##                       Version: 0.2.2.090 (20150514)                        ##
 ##                              File: plastey.py                              ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -29,8 +29,14 @@
 ######################################################################## INFO ##
 
 # Import python modules
-from subprocess   import Popen, PIPE
+from queue        import Queue
+from os.path      import isfile
+from threading    import Thread
 from configparser import ConfigParser
+from os.path      import join, expanduser
+from pickle       import dump, HIGHEST_PROTOCOL
+from os           import makedirs, listdir, remove
+from subprocess   import Popen, PIPE, TimeoutExpired
 from tkinter      import (Tk,
                           Toplevel,
                           Label,
@@ -55,33 +61,47 @@ config = ConfigParser()
 with open('config.ini', encoding='utf-8') as file:
     config.read_file(file)
 
+# Module level constants
+MODE_SINGLE_PLAYER     = False
+MODE_MULTI_PLAYER      = True
+BASE_OPENED_GEOMETRY   = False
+BASE_CLOSED_GEOMETRY   = True
+COMM_SOCKET_CLIENT     = False
+COMM_SOCKET_SERVER     = True
+COMM_THIS_HOST         = config['Communication']['this_host']
+COMM_THIS_PORT         = config['Communication']['this_port']
+COMM_OTHER_HOST        = config['Communication']['other_host']
+COMM_OTHER_PORT        = config['Communication']['other_port']
+ADDR_NO_ADDRESS        = 'Address not bound.'
+ADDR_HAVE_ADDRESS      = 'Address bound.'
+CONN_NOT_CONNECTED     = 'Disconnected.'
+CONN_CONNECTED         = 'Connected.'
+GUI_PAD_X              = 16
+GUI_PAD_Y              = GUI_PAD_X
+GUI_SECTION_PAD_X      = 32
+GUI_SECTION_PAD_Y      = GUI_SECTION_PAD_X
+DRAW_FULL_SCREEN       = bool(eval(config['Render']['full_screen']))
+DRAW_DISPLAY_X         = int(config['Render']['display_x'])
+DRAW_DISPLAY_Y         = int(config['Render']['display_y'])
+DRAW_RESOLUTION_X      = int(config['Render']['resolution_x'])
+DRAW_RESOLUTION_Y      = int(config['Render']['resolution_y'])
+FILE_TEMPORARY_FOLDER  = expanduser(config['Internal']['temp_base_dir'])
+FILE_PERMANENT_FOLDER  = expanduser(config['Internal']['permanent_save_dir'])
+FILE_AUTO_SAVE_FOLDER  = expanduser(join(FILE_TEMPORARY_FOLDER,
+                                         config['Internal']['temp_auto_save_dir']))
+FILE_TEMP_SAVE_FOLDER  = expanduser(join(FILE_TEMPORARY_FOLDER,
+                                         config['Internal']['temp_save_folder']))
+FILE_TEMP_STATE_FOLDER = expanduser(join(FILE_TEMPORARY_FOLDER,
+                                         config['Internal']['temp_states']))
+FILE_TEMP_FEEDS_FOLDER = expanduser(join(FILE_TEMPORARY_FOLDER,
+                                         config['Internal']['temp_feedbacks']))
+FILE_STATE_SHUT_DOWN   = join(FILE_TEMP_STATE_FOLDER, config['Internal']['state_shut_down'])
+FILE_STATE_RESTART     = join(FILE_TEMP_STATE_FOLDER, config['Internal']['state_restart'])
+FILE_STATE_RECOVER     = join(FILE_TEMP_STATE_FOLDER, config['Internal']['state_recover_auto'])
+FILE_STATE_DONE        = join(FILE_TEMP_STATE_FOLDER, config['Internal']['state_done'])
+
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-# Module level constants
-MODE_SINGLE_PLAYER   = False
-MODE_MULTI_PLAYER    = True
-BASE_OPENED_GEOMETRY = False
-BASE_CLOSED_GEOMETRY = True
-COMM_SOCKET_CLIENT   = False
-COMM_SOCKET_SERVER   = True
-COMM_THIS_HOST       = config['Communication']['this_host']
-COMM_THIS_PORT       = config['Communication']['this_port']
-COMM_OTHER_HOST      = config['Communication']['other_host']
-COMM_OTHER_PORT      = config['Communication']['other_port']
-ADDR_NO_ADDRESS      = 'Address not bound.'
-ADDR_HAVE_ADDRESS    = 'Address bound.'
-CONN_NOT_CONNECTED   = 'Disconnected.'
-CONN_CONNECTED       = 'Connected.'
-GUI_PAD_X            = 16
-GUI_PAD_Y            = GUI_PAD_X
-GUI_SECTION_PAD_X    = 32
-GUI_SECTION_PAD_Y    = GUI_SECTION_PAD_X
-DRAW_FULL_SCREEN     = bool(eval(config['Render']['full_screen']))
-DRAW_DISPLAY_X       = int(config['Render']['display_x'])
-DRAW_DISPLAY_Y       = int(config['Render']['display_y'])
-DRAW_RESOLUTION_X    = int(config['Render']['resolution_x'])
-DRAW_RESOLUTION_Y    = int(config['Render']['resolution_y'])
-
 # Set external module level constants
 with open('WARNING', encoding='utf-8') as file:
     WARN_TEXT = file.read()
@@ -151,6 +171,7 @@ class Plastey(Tk):
     def __init__(self, *args, **kwargs):
         Tk.__init__(self, *args, **kwargs)
 
+        # Set window title
         self.wm_title('Plastey Configurator')
 
         # Create GUI driven variables
@@ -182,6 +203,14 @@ class Plastey(Tk):
 
         # Follow changes on password
         self._pass.trace('w', self._on_bind_address)
+
+        # Create folder structures if they don't exists yet
+        makedirs(FILE_TEMPORARY_FOLDER,  exist_ok=True)
+        makedirs(FILE_PERMANENT_FOLDER,  exist_ok=True)
+        makedirs(FILE_TEMP_SAVE_FOLDER,  exist_ok=True)
+        makedirs(FILE_AUTO_SAVE_FOLDER,  exist_ok=True)
+        #makedirs(FILE_TEMP_STATE_FOLDER, exist_ok=True)
+        #makedirs(FILE_TEMP_FEEDS_FOLDER, exist_ok=True)
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
@@ -362,12 +391,23 @@ class Plastey(Tk):
                                             column = col,
                                             sticky = WEST)
         row += 1
-
         Button(master  = self,
                text    = 'Start game',
                command = self._on_start_game).grid(row    = row,
                                                    column = col,
                                                    sticky = WEST + EAST)
+        row += 1
+        Button(master  = self,
+               text    = 'Restart game',
+               command = self._on_restart_game).grid(row    = row,
+                                                     column = col,
+                                                     sticky = WEST + EAST)
+        row += 1
+        Button(master  = self,
+               text    = 'Stop game',
+               command = self._on_stop_game).grid(row    = row,
+                                                  column = col,
+                                                  sticky = WEST + EAST)
         row += 1
         Button(master  = self,
                text    = 'Save last mesh',
@@ -398,6 +438,7 @@ class Plastey(Tk):
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def _on_start_oculus_daemon(self, *args, **kwargs):
         print('starting daemon...')
+
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def _on_bind_address(self, *args, **kwargs):
@@ -432,18 +473,64 @@ class Plastey(Tk):
         if DRAW_FULL_SCREEN:
             window_command.append('wmctrl -r :ACTIVE: -b add,fullscreen')
 
-        for command in (' && '.join(window_command),
-                        './plastey'):
-            Popen(args   = command,
-                  shell  = True,
-                  stdin  = PIPE,
-                  stderr = PIPE,
-                  universal_newlines=True)
+        Popen(args   = ' && '.join(window_command),
+              shell  = True,
+              stdin  = PIPE,
+              stderr = PIPE,
+              universal_newlines=True)
+
+        # Store subprocess, for further communication
+        self._pipe = Popen(args   = './plastey',
+                           stdin  = PIPE,
+                           stdout = PIPE,
+                           stderr = PIPE,
+                           universal_newlines=True)
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def _on_restart_game(self, *args, **kwargs):
+        self._pipe.stdin.write('hello-world\n')
+        #if not self._locked:
+        #    self._locked = True
+        #    with open(FILE_STATE_RESTART, mode='w') as file:
+        #        file.write('')
+        #    Thread(name   = 'feedbackd-restart',
+        #           target = self._get_feedback_to_clean_up).start()
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def _on_stop_game(self, *args, **kwargs):
+        #if not self._locked:
+        #    self._locked = True
+        #    with open(FILE_STATE_SHUT_DOWN, mode='w') as file:
+        #        file.write('')
+        #    Thread(name   = 'feedbackd-shutdown',
+        #           target = self._get_feedback_to_clean_up).start()
+        self._pipe.communicate('hello-world\n')
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def _on_save_mesh(self, *args, **kwargs):
         pass
+        #if self._pipe.poll():
+        #    print('saving inside game')
+        #else:
+        #    print('save last auto-saved')
+
+        #print('parent says: hey there, daemon!\n')
+        #self._pipe.stdin.write('hey there, daemon!\n')
+
+        #self._pipe.stdin.close()
+        #try:
+        #    self._pipe.communicate('hey there, daemon!\n', timeout=0.1)
+        ## Hack: since communicate waits for the subprocess to terminate, the
+        ##       timeout value is necessary, however, after the timeout, the app
+        ##       won't terminate either. One solution should be
+        ##       self._pipe.stdin.write instead of the communicate method, but
+        ##       unfortunately the process's stdin.read/input are not getting
+        ##       anything.. is it because the value set to shell=True?
+        #except TimeoutExpired:
+        #    return
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #

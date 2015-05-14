@@ -1,0 +1,18 @@
+Keyboard bindings:
+------------------
+
+    S                =>    Save to permanent-folder
+    R                =>    Recover from auto-save
+    L                =>    Load last saved from temporary folder
+
+    BackSpace        =>    Clear messages
+    Space            =>    Reset scene
+    Home             =>    Place view back to start
+
+Gesture Colors:
+---------------
+
+    Grabbing         =>    Yellow                    => move
+    Dual-grabbing    =>    Blue                      => zoom/rotate
+    Picking          =>    Green : picked vertex     => select/deselect
+                           Red   : picked nothing    => nothing

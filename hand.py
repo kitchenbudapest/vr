@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.2.1.002 (20150510)                        ##
+##                       Version: 0.2.2.112 (20150514)                        ##
 ##                               File: hand.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -28,8 +28,9 @@
 ######################################################################## INFO ##
 
 # Import python modules
-from sys import path as sys_path
+from itertools   import chain
 from collections import OrderedDict
+from sys         import path as sys_path
 
 # Import leap modules
 sys_path.insert(0, '/usr/lib/Leap')
@@ -126,17 +127,25 @@ class Hand(CallbackManager):
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def __init__(self, finger_creator, *args, **kwargs):
+    def __init__(self,
+                 finger_creator,
+                 init_position,
+                 init_factor,
+                 *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self._fingers = fingers = OrderedDict()
+        self._names   = set()
         for i, (finger, details) in enumerate(self.FINGER_CONSTS):
             # Create blender object from prototype
             object = Finger(finger_creator(localScale=(details['scale_factor'],)*3,
-                                           worldPosition=(i, 0, 0)))
+                                           worldPosition=(init_position + i*init_factor, 0, 0)))
 
             # Make finger accessible through this hand as a member
             setattr(self, finger, object)
+
+            # Store names as well
+            self._names.add(finger)
 
             # Store fingers to be accessible via leap-types
             fingers[details['leap_type']] = object
@@ -162,23 +171,29 @@ class Hand(CallbackManager):
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def hide(self, *fingers, all_except=[]):
-        # TODO: implement excepttion
-        for finger in fingers:
-            self._fingers[finger].visible = False
+    def hide(self, name):
+        getattr(self, name)._object.setVisible(False, True)
+
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def hide_all(self, *exceptions):
-        for name, finger in self._fingers.items():
+        for name in self._names:
             if name not in exceptions:
-                finger.visible = True
+                getattr(self, name)._object.setVisible(False, True)
 
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def show(self, *fingers, all_except=[]):
-        for finger in fingers:
-            self._fingers[finger].visible = True
+    def show(self, name):
+        getattr(self, name)._object.setVisible(True, True)
 
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def show_all(self, *exceptions):
+        # HACK:
+        exceptions = set(chain(exceptions, ('ring', 'pinky')))
+        for name in self._names:
+            if name not in exceptions:
+                getattr(self, name)._object.setVisible(True, True)
 
 
 
@@ -202,8 +217,8 @@ class Hands(CallbackManager):
         super().__init__(*args, **kwargs)
 
         # Create both hands
-        self._left  = Hand(finger_creator)
-        self._right = Hand(finger_creator)
+        self._left  = Hand(finger_creator, init_position=-2, init_factor=-2)
+        self._right = Hand(finger_creator, init_position= 2, init_factor= 2)
 
         # Create references to hands, which will be passed as
         # arguments during the execution of callbacks
@@ -213,3 +228,9 @@ class Hands(CallbackManager):
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def __iter__(self):
         yield from (self._left, self._right)
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def show_all(self):
+        for hand in self:
+            hand.show_all()

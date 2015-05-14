@@ -4,7 +4,7 @@
 ##                                  =======                                   ##
 ##                                                                            ##
 ##      Oculus Rift + Leap Motion + Python 3 + C + Blender + Arch Linux       ##
-##                       Version: 0.2.1.015 (20150513)                        ##
+##                       Version: 0.2.2.112 (20150514)                        ##
 ##                                File: app.py                                ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -28,10 +28,16 @@
 ######################################################################## INFO ##
 
 # Import python modules
-from math     import radians
-from datetime import datetime
-from pickle   import dump, HIGHEST_PROTOCOL
-from sys      import path as sys_path, stderr
+from os.path    import join
+from select     import select
+from threading  import Thread
+from math       import radians
+from datetime   import datetime
+from subprocess import Popen, PIPE
+from queue      import Queue, Empty
+from os         import makedirs, listdir
+from pickle     import dump, HIGHEST_PROTOCOL
+from sys        import path as sys_path, stderr, stdin
 
 # Import leap modules
 sys_path.insert(0, '/usr/lib/Leap')
@@ -52,8 +58,19 @@ from callback import CallbackManager
 from utils    import save_to_file, load_from_file
 
 # Import global level constants
-from const import (INT_OUTPUT_FILE,
+from const import (INT_TEMP_SAVE_FILE,
+                   INT_AUTO_SAVE_FILE,
                    INT_TEXT_INTERVAL,
+                   INT_AUTO_SAVE_INTERVAL,
+                   INT_TEMPORARY_FOLDER,
+                   INT_PERMANENT_FOLDER,
+                   INT_AUTO_SAVE_FOLDER,
+                   INT_TEMP_SAVE_FOLDER,
+                   WINDOW_FULL_SCREEN,
+                   WINDOW_DISPLAY_X,
+                   WINDOW_DISPLAY_Y,
+                   WINDOW_RESOLUTION_X,
+                   WINDOW_RESOLUTION_Y,
                    APP_RUNNING,
                    APP_ESCAPED,
                    OBJ_PROTOTYPE_FINGER,
@@ -107,6 +124,10 @@ if COMM_IS_PAIRED:
 MOUNTED_ON_HEAD = 0
 MOUNTED_ON_DESK = 1
 # Local references of blender constants
+S_KEY           = bge.events.SKEY
+R_KEY           = bge.events.RKEY
+L_KEY           = bge.events.LKEY
+HOME_KEY        = bge.events.HOMEKEY
 SPACE_KEY       = bge.events.SPACEKEY
 ESCAPE_KEY      = bge.events.ESCKEY
 BACK_SPACE_KEY  = bge.events.BACKSPACEKEY
@@ -156,6 +177,43 @@ class Application(CallbackManager):
         #       the tests, this setting did not activate any of the keys, so it
         #       is a working work-around. (At least on Arch Linux)
         bge.logic.setExitKey(0)
+
+        # Place the window
+        window_command = ['sleep 1']
+        window_command.append('wmctrl -r :ACTIVE: '
+                              '-e 0,{},{},{},{}'.format(WINDOW_DISPLAY_X,
+                                                        WINDOW_DISPLAY_Y,
+                                                        WINDOW_RESOLUTION_X,
+                                                        WINDOW_RESOLUTION_Y))
+        if WINDOW_FULL_SCREEN:
+            window_command.append('wmctrl -r :ACTIVE: -b add,fullscreen')
+
+        Popen(args   = ' && '.join(window_command),
+              shell  = True,
+              stdin  = PIPE,
+              stderr = PIPE,
+              universal_newlines=True)
+
+        # Create folder structures if they don't exists yet
+        makedirs(INT_TEMPORARY_FOLDER,  exist_ok=True)
+        makedirs(INT_PERMANENT_FOLDER,  exist_ok=True)
+        makedirs(INT_TEMP_SAVE_FOLDER,  exist_ok=True)
+        makedirs(INT_AUTO_SAVE_FOLDER,  exist_ok=True)
+
+        ## Start input-daemon
+        #self._lines_queue = Queue()
+        #def get_input():
+        #    print('start')
+        #    for line in iter(stdin.readline, ''):
+        #        print('try')
+        #        self._lines_queue.put(line)
+        #    print('stop')
+        #    stdin.close()
+
+        #Thread(name   = 'inputd',
+        #       target = get_input).start()
+        #self._should_restart   = False
+        #self._should_shut_down = False
 
         try:
             # Create connection
@@ -233,6 +291,58 @@ class Application(CallbackManager):
             self._positioner = self._positioner_on_head
             self._selector   = self._select_right_hand_on_head
 
+        # Last time saved
+        self._auto_save_time = self._origo[PROP_TEXT_TIMER]
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def reset_view(self):
+        orientation = Matrix(((1.0, 0.0, 0.0),
+                              (0.0, 1.0, 0.0),
+                              (0.0, 0.0, 1.0)))
+        self._armature_control.worldOrientation = orientation
+        self._armature.worldOrientation = orientation
+        self._vertex_origo.worldScale = 1, 1, 1
+        self._surface.update()
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def save(self):
+        # Save created mesh
+        file_path = INT_TEMP_SAVE_FILE.format(datetime.now())
+        save_to_file(path=file_path, data=self._surface.serialise())
+        print('[OKAY] file has been saved to:', file_path)
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def load(self):
+        try:
+            file_path = join(INT_TEMP_SAVE_FOLDER,
+                             next(reversed(sorted(listdir(INT_TEMP_SAVE_FOLDER)))))
+            self._surface.deserialise(load_from_file(file_path))
+            print('[OKAY] file has been loaded from:', file_path)
+        except StopIteration:
+            print('[FAIL] there is no file in:', INT_TEMP_SAVE_FOLDER)
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def auto_save(self):
+        current_time = self._origo[PROP_TEXT_TIMER]
+        if self._auto_save_time + INT_AUTO_SAVE_INTERVAL <= current_time:
+            # Update last-time checked value
+            self._auto_save_time = current_time
+            # Save created mesh
+            save_to_file(path=INT_AUTO_SAVE_FILE,
+                         data=self._surface.serialise())
+            print('[OKAY] file has been auto-saved to:', INT_AUTO_SAVE_FILE)
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    def recover_from_auto_save(self):
+        self._auto_save_time = self._origo[PROP_TEXT_TIMER]
+        self._surface.deserialise(load_from_file(INT_AUTO_SAVE_FILE))
+        print('[OKAY] file has been recovered from:', INT_AUTO_SAVE_FILE)
+
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def __call__(self):
@@ -255,6 +365,14 @@ class Application(CallbackManager):
             except IndexError:
                 return
 
+        # Try to create backup
+        self.auto_save()
+
+        #try:
+        #    print('input:', self._lines_queue.get_nowait())
+        #except Empty:
+        #    pass
+
         # Ste states
         self.set_states(restart=COMM_RUNNING,
                         escape =APP_RUNNING)
@@ -263,6 +381,14 @@ class Application(CallbackManager):
             self.set_states(escape=APP_ESCAPED)
         elif bge.logic.keyboard.events[SPACE_KEY] == JUST_ACTIVATED:
             self.set_states(restart=COMM_RESTART)
+        elif bge.logic.keyboard.events[R_KEY] == JUST_ACTIVATED:
+            self.recover_from_auto_save()
+        elif bge.logic.keyboard.events[S_KEY] == JUST_ACTIVATED:
+            self.save()
+        elif bge.logic.keyboard.events[L_KEY] == JUST_ACTIVATED:
+            self.load()
+        elif bge.logic.keyboard.events[HOME_KEY] == JUST_ACTIVATED:
+            self.reset_view()
         elif bge.logic.keyboard.events[BACK_SPACE_KEY] == JUST_ACTIVATED:
             self._text.clear()
 
@@ -367,6 +493,4 @@ class Application(CallbackManager):
         except AttributeError:
             pass
         # Save created mesh
-        save_to_file(path=INT_OUTPUT_FILE.format(datetime.now()),
-                     data=self._surface.serialise())
-        print('[OKAY] a temporary file has been saved')
+        self.save()
